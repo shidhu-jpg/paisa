@@ -1,0 +1,1845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Paisa · Money, gamified.</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#F7F5F0; --surface:#FFFFFF; --ink:#1A1814; --muted:#8C8880;
+  --accent:#2D6A4F; --accent-light:#D8F3DC;
+  --danger:#C1440E; --danger-light:#FDEBD9;
+  --border:#E8E4DC;
+  --shadow:0 1px 3px rgba(26,24,20,.06),0 4px 16px rgba(26,24,20,.04);
+  --c-e:#7C3AED; --c-e-bg:#EDE9FE;
+  --c-n:#0369A1; --c-n-bg:#E0F2FE;
+  --c-g:#B45309; --c-g-bg:#FEF3C7;
+  --gold:#D97706; --gold-bg:#FEF3C7;
+  --fire:#EA580C;
+}
+html,body{overscroll-behavior-y:none}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;font-size:15px;-webkit-font-smoothing:antialiased;user-select:none}
+input{user-select:text}
+button{font-family:inherit;cursor:pointer}
+.app{max-width:480px;margin:0 auto;padding:0 0 110px}
+
+/* ═══ TOP BAR (Streak + Level — always visible, sticky) ═══ */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:14px 18px 10px;background:var(--bg);position:sticky;top:0;z-index:15;
+}
+.brand{font-family:'DM Serif Display',serif;font-size:22px;letter-spacing:-.4px}
+.brand span{font-style:italic;color:var(--accent)}
+.streak-chip{
+  display:flex;align-items:center;gap:6px;
+  background:linear-gradient(135deg,#FED7AA,#FDBA74);
+  padding:6px 12px 6px 10px;border-radius:99px;
+  font-weight:600;font-size:13px;color:#9A3412;
+  box-shadow:0 2px 8px rgba(234,88,12,.25);
+  cursor:pointer;transition:transform .15s;
+}
+.streak-chip:active{transform:scale(.95)}
+.streak-chip.cold{background:var(--border);color:var(--muted);box-shadow:none}
+.xp-pill{
+  display:flex;align-items:center;gap:5px;
+  background:var(--ink);color:#fff;padding:5px 11px;border-radius:99px;
+  font-size:12px;font-weight:500;cursor:pointer;transition:transform .15s;
+}
+.xp-pill:active{transform:scale(.95)}
+.xp-pill .lvl{background:var(--gold);color:#fff;border-radius:99px;padding:2px 7px;font-size:10px;font-weight:600;margin-right:2px}
+
+/* ═══ NAV ═══ */
+.nav{
+  display:flex;background:var(--bg);border-bottom:1.5px solid var(--border);
+  position:sticky;top:50px;z-index:14;padding:0 12px;
+}
+.nav-tab{
+  flex:1;padding:10px 4px 12px;border:none;background:transparent;
+  font-size:13px;font-weight:500;color:var(--muted);
+  border-bottom:2.5px solid transparent;transition:all .2s;
+}
+.nav-tab.active{color:var(--ink);border-bottom-color:var(--ink)}
+
+/* ═══ PAGES ═══ */
+.page{display:none;animation:fadeIn .2s}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* HEADER inside page */
+.phead{padding:20px 22px 14px}
+.phead h1{font-family:'DM Serif Display',serif;font-size:28px;letter-spacing:-.5px}
+.phead h1 span{font-style:italic;color:var(--accent)}
+.phead .sub{font-size:13px;color:var(--muted);margin-top:2px;font-weight:300}
+
+/* ═══ BALANCE CARD ═══ */
+.balance-card{
+  margin:0 14px 16px;background:var(--ink);border-radius:22px;
+  padding:24px 26px 22px;color:#fff;position:relative;overflow:hidden
+}
+.balance-card::before{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:rgba(255,255,255,.04);border-radius:50%}
+.balance-card::after{content:'';position:absolute;bottom:-60px;left:60px;width:200px;height:200px;background:rgba(255,255,255,.03);border-radius:50%}
+.bl-lbl{font-size:11px;text-transform:uppercase;letter-spacing:1.4px;opacity:.5;font-weight:500}
+.bl-amt{font-family:'DM Serif Display',serif;font-size:40px;margin:4px 0 16px;letter-spacing:-1px}
+.bl-amt .cur{font-size:20px;opacity:.6;margin-right:2px;vertical-align:super;font-family:'DM Sans',sans-serif;font-weight:300}
+.bl-row{display:flex;gap:18px}
+.bl-mini{flex:1}
+.bl-mini-lbl{font-size:10px;text-transform:uppercase;letter-spacing:1px;opacity:.45}
+.bl-mini-val{font-size:17px;font-weight:500;margin-top:2px}
+.bl-mini-val.inc{color:#52D9A0}.bl-mini-val.exp{color:#FF8A6A}
+
+/* ═══ SAFE TO SPEND (killer feature) ═══ */
+.safe-card{
+  margin:0 14px 16px;background:var(--surface);border-radius:18px;
+  padding:18px 20px;box-shadow:var(--shadow);
+  display:flex;align-items:center;gap:14px;position:relative;overflow:hidden;
+}
+.safe-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
+  background:var(--accent);
+}
+.safe-card.warn::before{background:var(--gold)}
+.safe-card.over::before{background:var(--danger)}
+.safe-emoji{font-size:28px}
+.safe-body{flex:1}
+.safe-lbl{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);font-weight:500}
+.safe-amt{font-family:'DM Serif Display',serif;font-size:22px;margin-top:1px}
+.safe-amt.over{color:var(--danger)}
+.safe-hint{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* ═══ SECTION HEAD ═══ */
+.sh{display:flex;justify-content:space-between;align-items:baseline;padding:14px 22px 10px;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted)}
+.sh-link{color:var(--accent);cursor:pointer;text-transform:none;letter-spacing:0;font-size:12px;font-weight:500}
+
+/* ═══ QUICK ADD (Overview) ═══ */
+.qa-row{display:flex;gap:8px;padding:0 14px 4px;overflow-x:auto;scrollbar-width:none}
+.qa-row::-webkit-scrollbar{display:none}
+.qa-chip{
+  flex-shrink:0;background:var(--surface);border:1.5px solid var(--border);
+  border-radius:16px;padding:12px 14px;min-width:104px;cursor:pointer;
+  box-shadow:var(--shadow);transition:transform .12s;
+}
+.qa-chip:active{transform:scale(.96)}
+.qa-chip .qa-ico{font-size:20px;margin-bottom:4px}
+.qa-chip .qa-lbl{font-size:11px;color:var(--muted);line-height:1.2}
+.qa-chip .qa-amt{font-size:14px;font-weight:600;margin-top:2px}
+
+/* ═══ DONUT ═══ */
+.donut-wrap{margin:0 14px 4px;background:var(--surface);border-radius:18px;padding:18px 16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:18px}
+.donut-legend{flex:1;display:flex;flex-direction:column;gap:8px}
+.leg-row{display:flex;align-items:center;gap:8px;font-size:13px}
+.leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.leg-lbl{flex:1;color:var(--muted)}
+.leg-val{font-weight:500}
+
+/* ═══ BUCKETS (Breakdown page) ═══ */
+.buckets{padding:0 14px;display:flex;flex-direction:column;gap:10px;margin-bottom:4px}
+.bucket{background:var(--surface);border-radius:18px;padding:18px;box-shadow:var(--shadow);cursor:pointer;transition:transform .12s}
+.bucket:active{transform:scale(.985)}
+.bucket-hdr{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.bkt-icon{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.bkt-icon.e{background:var(--c-e-bg)}.bkt-icon.n{background:var(--c-n-bg)}.bkt-icon.g{background:var(--c-g-bg)}
+.bkt-meta{flex:1;min-width:0}
+.bkt-name{font-weight:500;font-size:15px}
+.bkt-sub{font-size:12px;color:var(--muted);margin-top:1px}
+.bkt-right{text-align:right}
+.bkt-total{font-family:'DM Serif Display',serif;font-size:19px}
+.bkt-total.e{color:var(--c-e)}.bkt-total.n{color:var(--c-n)}.bkt-total.g{color:var(--c-g)}
+.bkt-of{font-size:10px;color:var(--muted);margin-top:2px}
+.bar-bg{height:6px;background:var(--border);border-radius:99px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:99px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.bar-fill.e{background:var(--c-e)}.bar-fill.n{background:var(--c-n)}.bar-fill.g{background:var(--c-g)}
+.bar-over{background:var(--danger)!important;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+.bar-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px}
+.bkt-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.bkt-tag{font-size:11px;padding:3px 9px;border-radius:99px;font-weight:500}
+.bkt-tag.e{background:var(--c-e-bg);color:var(--c-e)}
+.bkt-tag.n{background:var(--c-n-bg);color:var(--c-n)}
+.bkt-tag.g{background:var(--c-g-bg);color:var(--c-g)}
+
+/* ═══ GOALS ═══ */
+.goal-card{
+  background:var(--surface);border-radius:18px;padding:18px;
+  box-shadow:var(--shadow);margin:0 14px 10px;position:relative;overflow:hidden
+}
+.goal-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.goal-ico{font-size:26px}
+.goal-meta{flex:1}
+.goal-name{font-weight:500;font-size:15px}
+.goal-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.goal-pct{font-family:'DM Serif Display',serif;font-size:22px;color:var(--accent)}
+.goal-bar{height:8px;background:var(--border);border-radius:99px;overflow:hidden;margin-bottom:8px}
+.goal-bar-fill{height:100%;background:linear-gradient(90deg,#52D9A0,#2D6A4F);border-radius:99px;transition:width .6s}
+.goal-nums{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.goal-nums strong{color:var(--ink);font-weight:500}
+.goal-add-btn{
+  width:100%;padding:14px;background:var(--surface);
+  border:1.5px dashed var(--border);border-radius:14px;
+  color:var(--muted);font-size:14px;margin:0 14px 0;
+  width:calc(100% - 28px);margin-left:14px;transition:all .2s
+}
+.goal-add-btn:hover{border-color:var(--ink);color:var(--ink)}
+
+/* ═══ ACHIEVEMENTS ═══ */
+.achv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 14px}
+.achv{
+  background:var(--surface);border-radius:14px;padding:14px 8px;
+  text-align:center;box-shadow:var(--shadow);
+  transition:transform .15s;position:relative;overflow:hidden;
+}
+.achv.locked{opacity:.35;filter:grayscale(1)}
+.achv.unlocked{cursor:default}
+.achv-ico{font-size:28px;margin-bottom:4px}
+.achv-name{font-size:11px;font-weight:500;line-height:1.2}
+.achv-desc{font-size:9px;color:var(--muted);margin-top:2px;line-height:1.2}
+.achv.unlocked::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 0%,var(--gold-bg),transparent 60%);
+  pointer-events:none;
+}
+
+/* ═══ TX LIST ═══ */
+.tabs{display:flex;gap:6px;padding:0 14px 14px;flex-wrap:wrap}
+.tab{padding:6px 12px;border-radius:40px;border:1.5px solid var(--border);background:transparent;font-size:12px;font-weight:500;color:var(--muted);transition:all .2s}
+.tab.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.tx-list{padding:0 14px;display:flex;flex-direction:column;gap:8px}
+.tx-item{
+  background:var(--surface);border-radius:14px;padding:13px 15px;
+  display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);
+  animation:sIn .25s ease forwards;transition:transform .12s;cursor:pointer;
+}
+.tx-item:active{transform:scale(.985)}
+@keyframes sIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.tx-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.tx-icon.ii{background:var(--accent-light)}.tx-icon.ei{background:var(--danger-light)}
+.tx-info{flex:1;min-width:0}
+.tx-name{font-weight:500;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-meta{font-size:11px;color:var(--muted);margin-top:1px}
+.tx-right{text-align:right;flex-shrink:0}
+.tx-amt{font-size:15px;font-weight:500;white-space:nowrap}
+.tx-amt.inc{color:var(--accent)}.tx-amt.exp{color:var(--danger)}
+.tx-btag{font-size:9px;padding:2px 6px;border-radius:99px;margin-top:2px;display:inline-block}
+.tx-btag.e{background:var(--c-e-bg);color:var(--c-e)}
+.tx-btag.n{background:var(--c-n-bg);color:var(--c-n)}
+.tx-btag.g{background:var(--c-g-bg);color:var(--c-g)}
+
+.empty{text-align:center;padding:40px 22px;color:var(--muted)}
+.empty-ico{font-size:42px;margin-bottom:10px;opacity:.4}
+.empty p{font-size:14px}
+
+/* ═══ FAB (big, one-handed reach) ═══ */
+.fab{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--ink);color:#fff;border:none;border-radius:50px;
+  padding:16px 30px;font-size:15px;font-weight:600;
+  box-shadow:0 10px 32px rgba(26,24,20,.3);
+  transition:transform .15s,box-shadow .15s;
+  display:flex;align-items:center;gap:8px;z-index:20;
+}
+.fab:active{transform:translateX(-50%) scale(.96)}
+.fab .plus{font-size:20px;line-height:1}
+
+/* ═══ MODAL / SHEET ═══ */
+.overlay{position:fixed;inset:0;background:rgba(26,24,20,.5);z-index:50;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(4px)}
+.overlay.open{opacity:1;pointer-events:all}
+.sheet{background:var(--surface);width:100%;max-width:480px;margin:0 auto;border-radius:26px 26px 0 0;padding:20px 20px 32px;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,1,.65,1);max-height:95vh;overflow-y:auto}
+.overlay.open .sheet{transform:translateY(0)}
+.handle{width:36px;height:4px;background:var(--border);border-radius:4px;margin:0 auto 16px}
+
+/* ═══ QUICK ADD SHEET (the main fast-entry) ═══ */
+.qa-sheet .type-toggle{display:flex;border:1.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px}
+.type-btn{flex:1;padding:10px;border:none;background:transparent;font-size:13px;font-weight:500;color:var(--muted)}
+.type-btn.active.income{background:var(--accent-light);color:var(--accent)}
+.type-btn.active.expense{background:var(--danger-light);color:var(--danger)}
+
+/* Amount display (big) */
+.amt-display{
+  font-family:'DM Serif Display',serif;font-size:56px;
+  text-align:center;padding:18px 0 8px;letter-spacing:-1.5px;
+  color:var(--ink);min-height:80px;transition:color .15s;
+}
+.amt-display.empty{color:var(--border)}
+.amt-display .cur{font-size:26px;opacity:.4;margin-right:4px;vertical-align:middle}
+
+/* Number pad */
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 14px}
+.key{
+  padding:16px;background:var(--bg);border:none;border-radius:14px;
+  font-size:22px;font-weight:500;color:var(--ink);
+  transition:background .1s,transform .08s;
+}
+.key:active{background:var(--border);transform:scale(.96)}
+.key.special{background:var(--surface);border:1.5px solid var(--border);font-size:18px}
+
+/* Bucket picker */
+.bkt-picker{display:flex;gap:8px;margin-bottom:12px}
+.bkt-pill{flex:1;padding:10px 4px;border-radius:14px;border:1.5px solid var(--border);background:transparent;font-size:11px;font-weight:500;color:var(--muted);text-align:center;line-height:1.4;transition:all .15s}
+.bkt-pill.ae{background:var(--c-e-bg);color:var(--c-e);border-color:var(--c-e)}
+.bkt-pill.an{background:var(--c-n-bg);color:var(--c-n);border-color:var(--c-n)}
+.bkt-pill.ag{background:var(--c-g-bg);color:var(--c-g);border-color:var(--c-g)}
+
+/* Category chips */
+.cat-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;max-height:104px;overflow-y:auto}
+.cat-chip{padding:7px 12px;border-radius:99px;background:var(--bg);border:1.5px solid var(--border);font-size:12px;color:var(--ink);transition:all .15s}
+.cat-chip.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* Desc input */
+.desc-input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;background:var(--bg);font-family:inherit;font-size:14px;color:var(--ink);outline:none;margin-bottom:12px;-webkit-appearance:none}
+.desc-input:focus{border-color:var(--ink)}
+
+.submit-btn{
+  width:100%;padding:15px;background:var(--ink);color:#fff;border:none;border-radius:14px;
+  font-size:15px;font-weight:600;transition:opacity .2s,transform .12s;
+}
+.submit-btn:active{transform:scale(.98)}
+.submit-btn:disabled{opacity:.3}
+
+/* ═══ TOAST (XP gain, achievements) ═══ */
+.toast-layer{position:fixed;top:70px;left:0;right:0;z-index:100;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;padding:0 14px}
+.toast{
+  background:var(--ink);color:#fff;padding:10px 18px;border-radius:99px;
+  font-size:13px;font-weight:500;box-shadow:0 8px 24px rgba(26,24,20,.3);
+  animation:toastIn .35s cubic-bezier(.2,1,.3,1),toastOut .35s 2.6s forwards;
+  display:flex;align-items:center;gap:8px;
+}
+.toast.gold{background:linear-gradient(135deg,#F59E0B,#D97706)}
+.toast.fire{background:linear-gradient(135deg,#F97316,#EA580C)}
+@keyframes toastIn{from{opacity:0;transform:translateY(-20px) scale(.9)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes toastOut{to{opacity:0;transform:translateY(-20px) scale(.9)}}
+
+/* ═══ CONFETTI ═══ */
+.confetti{position:fixed;top:-10px;pointer-events:none;z-index:99;animation:fall 2.5s ease-in forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:0}}
+
+/* ═══ STATS SHEET (streak calendar) ═══ */
+.streak-big{text-align:center;padding:14px 0 10px}
+.streak-big .flame{font-size:60px}
+.streak-big .days{font-family:'DM Serif Display',serif;font-size:44px;letter-spacing:-1px}
+.streak-big .lbl{font-size:13px;color:var(--muted)}
+.streak-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:14px 6px}
+.scal-d{aspect-ratio:1;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted)}
+.scal-d.active{background:linear-gradient(135deg,#FB923C,#EA580C);color:#fff;font-weight:600}
+.scal-d.today{outline:2px solid var(--ink);outline-offset:-2px}
+.scal-header{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:0 6px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;text-align:center}
+
+/* ═══ SWIPE-TO-DELETE ═══ */
+.tx-wrap{position:relative;overflow:hidden;border-radius:14px}
+.tx-del-bg{position:absolute;inset:0;background:var(--danger);color:#fff;display:flex;align-items:center;justify-content:flex-end;padding-right:20px;font-size:13px;font-weight:500;z-index:0}
+.tx-wrap .tx-item{position:relative;z-index:1;transition:transform .2s}
+
+/* ═══ SETTINGS GEAR ═══ */
+.gear-btn{
+  background:var(--surface);border:1.5px solid var(--border);
+  width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:16px;cursor:pointer;transition:transform .15s;
+}
+.gear-btn:active{transform:scale(.92)}
+
+/* ═══ TX ACTION MENU ═══ */
+.action-menu{
+  background:var(--surface);width:100%;max-width:480px;margin:0 auto;
+  border-radius:26px 26px 0 0;padding:20px 16px 32px;
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.32,1,.65,1);
+}
+.overlay.open .action-menu{transform:translateY(0)}
+.action-tx-preview{
+  background:var(--bg);border-radius:14px;padding:14px 16px;
+  display:flex;align-items:center;gap:12px;margin-bottom:16px;
+}
+.action-tx-ico{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.action-tx-name{font-weight:500;font-size:14px}
+.action-tx-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.action-tx-amt{font-size:16px;font-weight:600;margin-left:auto;flex-shrink:0}
+.action-row{
+  display:flex;align-items:center;gap:14px;padding:15px 4px;
+  border-bottom:1px solid var(--border);cursor:pointer;
+  transition:background .12s;border-radius:8px;
+}
+.action-row:last-child{border-bottom:none}
+.action-row:active{background:var(--bg)}
+.action-row-ico{
+  width:40px;height:40px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;
+}
+.action-row-ico.edit{background:var(--accent-light)}
+.action-row-ico.del{background:var(--danger-light)}
+.action-row-body{flex:1}
+.action-row-title{font-size:14px;font-weight:500}
+.action-row-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.action-row-title.del{color:var(--danger)}
+
+/* ═══ EDIT SHEET ═══ */
+.edit-sheet-title{font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:18px}
+.edit-field{margin-bottom:14px}
+.edit-field label{display:block;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px}
+.edit-field input,.edit-field select{
+  width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;
+  background:var(--bg);font-family:inherit;font-size:15px;color:var(--ink);outline:none;
+  transition:border-color .2s;-webkit-appearance:none;
+}
+.edit-field input:focus,.edit-field select:focus{border-color:var(--ink)}
+.edit-field.big input{font-family:'DM Serif Display',serif;font-size:28px;letter-spacing:-.5px}
+.edit-actions{display:flex;gap:10px;margin-top:6px}
+.edit-save-btn{flex:1;padding:14px;background:var(--ink);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600}
+.edit-save-btn:active{opacity:.85}
+.edit-cancel-btn{padding:14px 20px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;font-size:15px;font-weight:500;color:var(--muted)}
+.edit-cancel-btn:active{background:var(--border)}
+
+/* ═══ BACKUP BANNER ═══ */
+.backup-banner{
+  margin:0 14px 12px;background:linear-gradient(135deg,#FEF3C7,#FDE68A);
+  border-radius:14px;padding:13px 16px;display:flex;align-items:center;gap:12px;
+  border:1px solid #FCD34D;cursor:pointer;transition:transform .15s;
+}
+.backup-banner:active{transform:scale(.99)}
+.backup-banner.danger{background:linear-gradient(135deg,#FEE2E2,#FECACA);border-color:#FCA5A5}
+.bb-ico{font-size:22px;flex-shrink:0}
+.bb-body{flex:1;min-width:0}
+.bb-title{font-size:13px;font-weight:600;color:#92400E}
+.backup-banner.danger .bb-title{color:#991B1B}
+.bb-sub{font-size:11px;color:#B45309;margin-top:1px}
+.backup-banner.danger .bb-sub{color:#B91C1C}
+.bb-arrow{font-size:18px;color:#92400E;opacity:.6}
+
+/* ═══ SETTINGS SHEET ═══ */
+.settings-row{
+  display:flex;align-items:center;gap:14px;padding:14px 4px;
+  border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;
+}
+.settings-row:last-child{border-bottom:none}
+.settings-row:active{background:var(--bg)}
+.sr-ico{
+  width:40px;height:40px;border-radius:12px;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;
+}
+.sr-body{flex:1;min-width:0}
+.sr-title{font-size:14px;font-weight:500}
+.sr-sub{font-size:11px;color:var(--muted);margin-top:1px;line-height:1.35}
+.sr-arrow{color:var(--muted);font-size:16px}
+
+.status-pill{
+  display:inline-block;padding:2px 9px;border-radius:99px;
+  font-size:10px;font-weight:600;letter-spacing:.3px;
+}
+.status-pill.safe{background:var(--accent-light);color:var(--accent)}
+.status-pill.warn{background:#FEF3C7;color:#92400E}
+.status-pill.danger{background:#FEE2E2;color:#991B1B}
+
+.danger-btn{
+  width:100%;padding:13px;background:transparent;color:var(--danger);
+  border:1.5px solid var(--danger-light);border-radius:12px;
+  font-size:13px;font-weight:500;margin-top:14px;
+}
+.danger-btn:active{background:var(--danger-light)}
+
+/* hidden file input */
+.file-input{display:none}
+
+/* Incognito warning */
+.incog-warn{
+  margin:0 14px 12px;background:#FEE2E2;border:1px solid #FCA5A5;border-radius:14px;
+  padding:13px 16px;color:#991B1B;font-size:12px;line-height:1.4;
+}
+.incog-warn strong{display:block;margin-bottom:3px;font-size:13px}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ═══ TOP BAR ═══ -->
+  <div class="topbar">
+    <div class="brand">Pai<span>sa</span></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div class="xp-pill" onclick="openAchvSheet()">
+        <span class="lvl" id="tbLvl">1</span>
+        <span id="tbXp">0</span> XP
+      </div>
+      <div class="streak-chip" id="streakChip" onclick="openStreakSheet()">
+        🔥 <span id="tbStreak">0</span>
+      </div>
+      <button class="gear-btn" onclick="openSettingsSheet()" title="Settings & Backup">⚙️</button>
+    </div>
+  </div>
+
+  <!-- ═══ NAV ═══ -->
+  <div class="nav">
+    <button class="nav-tab active" onclick="showPage('home',this)">Home</button>
+    <button class="nav-tab" onclick="showPage('breakdown',this)">Buckets</button>
+    <button class="nav-tab" onclick="showPage('goals',this)">Goals</button>
+    <button class="nav-tab" onclick="showPage('history',this)">History</button>
+  </div>
+
+  <!-- ═══ HOME ═══ -->
+  <div class="page active" id="page-home">
+
+    <!-- Incognito warning (only shown when storage is ephemeral) -->
+    <div class="incog-warn" id="incogWarn" style="display:none">
+      <strong>⚠️ Private browsing detected</strong>
+      Your data will be lost when you close this tab. Open Paisa in a regular tab to save data, and always export backups.
+    </div>
+
+    <!-- Backup reminder banner -->
+    <div class="backup-banner" id="backupBanner" style="display:none" onclick="openSettingsSheet()">
+      <div class="bb-ico" id="bbIco">💾</div>
+      <div class="bb-body">
+        <div class="bb-title" id="bbTitle">Back up your data</div>
+        <div class="bb-sub" id="bbSub">Tap to export a safe copy</div>
+      </div>
+      <div class="bb-arrow">›</div>
+    </div>
+
+    <!-- Balance -->
+    <div class="balance-card" style="margin-top:14px">
+      <div class="bl-lbl">Total Balance</div>
+      <div class="bl-amt"><span class="cur">₹</span><span id="totBal">0</span></div>
+      <div class="bl-row">
+        <div class="bl-mini"><div class="bl-mini-lbl">Income (month)</div><div class="bl-mini-val inc">₹<span id="totInc">0</span></div></div>
+        <div class="bl-mini"><div class="bl-mini-lbl">Spent (month)</div><div class="bl-mini-val exp">₹<span id="totExp">0</span></div></div>
+      </div>
+    </div>
+
+    <!-- Safe to Spend -->
+    <div class="safe-card" id="safeCard">
+      <div class="safe-emoji" id="safeEmoji">✨</div>
+      <div class="safe-body">
+        <div class="safe-lbl">Safe to spend today</div>
+        <div class="safe-amt" id="safeAmt">₹—</div>
+        <div class="safe-hint" id="safeHint">Set a monthly budget to see this</div>
+      </div>
+    </div>
+
+    <!-- Quick Add chips -->
+    <div class="sh"><span>Quick Add</span><span class="sh-link" onclick="openSheet()">+ Add new</span></div>
+    <div class="qa-row" id="qaRow"></div>
+
+    <!-- Donut -->
+    <div class="sh"><span>Where money goes this month</span></div>
+    <div class="donut-wrap">
+      <svg width="90" height="90" viewBox="0 0 90 90" id="donutSvg" style="flex-shrink:0">
+        <circle cx="45" cy="45" r="36" fill="none" stroke="#E8E4DC" stroke-width="12"/>
+      </svg>
+      <div class="donut-legend" id="donutLeg"></div>
+    </div>
+
+    <!-- Recent -->
+    <div class="sh"><span>Recent</span><span class="sh-link" onclick="showPage('history',document.querySelectorAll('.nav-tab')[3])">See all →</span></div>
+    <div class="tx-list" id="recentList"></div>
+  </div>
+
+  <!-- ═══ BREAKDOWN / BUCKETS ═══ -->
+  <div class="page" id="page-breakdown">
+    <div class="phead">
+      <h1>Spend <span>buckets</span></h1>
+      <div class="sub">Set monthly budgets and see where you really spend</div>
+    </div>
+    <div class="buckets" id="bucketList"></div>
+    <div style="padding:8px 14px 0">
+      <button class="goal-add-btn" style="margin-left:0;width:100%" onclick="openBudgetSheet()">⚙️ Edit monthly budgets</button>
+    </div>
+  </div>
+
+  <!-- ═══ GOALS ═══ -->
+  <div class="page" id="page-goals">
+    <div class="phead">
+      <h1>Savings <span>goals</span></h1>
+      <div class="sub">Small wins build big habits</div>
+    </div>
+    <div id="goalList"></div>
+    <button class="goal-add-btn" onclick="openGoalSheet()">+ New goal</button>
+
+    <!-- Achievements -->
+    <div class="sh" style="margin-top:10px"><span>Achievements</span><span id="achvCount"></span></div>
+    <div class="achv-grid" id="achvGrid"></div>
+  </div>
+
+  <!-- ═══ HISTORY ═══ -->
+  <div class="page" id="page-history">
+    <div class="phead"><h1>All <span>entries</span></h1></div>
+    <div class="tabs" id="filterTabs">
+      <button class="tab active" onclick="filterTx('all',this)">All</button>
+      <button class="tab" onclick="filterTx('income',this)">Income</button>
+      <button class="tab" onclick="filterTx('expense',this)">Expense</button>
+      <button class="tab" onclick="filterTx('e',this)">🎭 Fun</button>
+      <button class="tab" onclick="filterTx('n',this)">🏠 Needs</button>
+      <button class="tab" onclick="filterTx('g',this)">🚀 Growth</button>
+    </div>
+    <div class="sh"><span>Entries</span><span id="txCount"></span></div>
+    <div class="tx-list" id="txList"></div>
+  </div>
+
+</div>
+
+<!-- Toast layer -->
+<div class="toast-layer" id="toastLayer"></div>
+
+<!-- FAB -->
+<button class="fab" onclick="openSheet()"><span class="plus">＋</span> Log</button>
+
+<!-- ═══ TX ACTION MENU ═══ -->
+<div class="overlay" id="txActionOverlay" onclick="if(event.target===this)closeTxActions()">
+  <div class="action-menu">
+    <div class="handle"></div>
+    <!-- Preview of the transaction -->
+    <div class="action-tx-preview" id="actionPreview"></div>
+    <!-- Actions -->
+    <div class="action-row" onclick="openEditSheet()">
+      <div class="action-row-ico edit">✏️</div>
+      <div class="action-row-body">
+        <div class="action-row-title">Edit transaction</div>
+        <div class="action-row-sub">Change amount, category, note or bucket</div>
+      </div>
+    </div>
+    <div class="action-row" onclick="confirmDeleteTx()">
+      <div class="action-row-ico del">🗑</div>
+      <div class="action-row-body">
+        <div class="action-row-title del">Delete</div>
+        <div class="action-row-sub">Remove this entry permanently</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ EDIT SHEET ═══ -->
+<div class="overlay" id="editOverlay" onclick="if(event.target===this)closeEditSheet()">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="edit-sheet-title">Edit transaction</div>
+
+    <!-- Type toggle -->
+    <div class="type-toggle" style="margin-bottom:14px">
+      <button class="type-btn" id="editBtnExp" onclick="editSetType('expense')">↓ Expense</button>
+      <button class="type-btn" id="editBtnInc" onclick="editSetType('income')">↑ Income</button>
+    </div>
+
+    <!-- Amount -->
+    <div class="edit-field big">
+      <label>Amount (₹)</label>
+      <input type="number" id="editAmt" placeholder="0" min="0">
+    </div>
+
+    <!-- Bucket (expense only) -->
+    <div id="editBktWrap" style="margin-bottom:14px">
+      <label style="display:block;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px">Spending Bucket</label>
+      <div class="bkt-picker">
+        <button class="bkt-pill" id="editPill-e" onclick="editSetBucket('e')">🎭<br>Fun</button>
+        <button class="bkt-pill" id="editPill-n" onclick="editSetBucket('n')">🏠<br>Needs</button>
+        <button class="bkt-pill" id="editPill-g" onclick="editSetBucket('g')">🚀<br>Growth</button>
+      </div>
+    </div>
+
+    <!-- Category -->
+    <div class="edit-field">
+      <label>Category</label>
+      <select id="editCat"></select>
+    </div>
+
+    <!-- Note -->
+    <div class="edit-field">
+      <label>Note</label>
+      <input type="text" id="editDesc" placeholder="Optional note">
+    </div>
+
+    <div class="edit-actions">
+      <button class="edit-cancel-btn" onclick="closeEditSheet()">Cancel</button>
+      <button class="edit-save-btn" onclick="saveEdit()">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ QUICK-ADD SHEET ═══ -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeSheet()">
+  <div class="sheet qa-sheet">
+    <div class="handle"></div>
+
+    <div class="type-toggle">
+      <button class="type-btn active expense" id="btnExp" onclick="setType('expense')">↓ Expense</button>
+      <button class="type-btn income"         id="btnInc" onclick="setType('income')">↑ Income</button>
+    </div>
+
+    <div class="amt-display empty" id="amtDisplay"><span class="cur">₹</span><span id="amtText">0</span></div>
+
+    <!-- Number pad -->
+    <div class="keypad">
+      <button class="key" onclick="keyPress('1')">1</button>
+      <button class="key" onclick="keyPress('2')">2</button>
+      <button class="key" onclick="keyPress('3')">3</button>
+      <button class="key" onclick="keyPress('4')">4</button>
+      <button class="key" onclick="keyPress('5')">5</button>
+      <button class="key" onclick="keyPress('6')">6</button>
+      <button class="key" onclick="keyPress('7')">7</button>
+      <button class="key" onclick="keyPress('8')">8</button>
+      <button class="key" onclick="keyPress('9')">9</button>
+      <button class="key special" onclick="keyPress('00')">00</button>
+      <button class="key" onclick="keyPress('0')">0</button>
+      <button class="key special" onclick="keyPress('back')">⌫</button>
+    </div>
+
+    <!-- Bucket picker (expense only) -->
+    <div id="bktWrap">
+      <div class="bkt-picker">
+        <button class="bkt-pill" id="pill-e" onclick="setBucket('e')">🎭<br>Fun</button>
+        <button class="bkt-pill" id="pill-n" onclick="setBucket('n')">🏠<br>Needs</button>
+        <button class="bkt-pill" id="pill-g" onclick="setBucket('g')">🚀<br>Growth</button>
+      </div>
+    </div>
+
+    <div class="cat-chips" id="catChips"></div>
+
+    <input type="text" class="desc-input" id="descIn" placeholder="Note (optional)">
+
+    <button class="submit-btn" id="submitBtn" onclick="addTx()">Log transaction</button>
+  </div>
+</div>
+
+<!-- ═══ SETTINGS SHEET ═══ -->
+<div class="overlay" id="settingsOverlay" onclick="if(event.target===this)closeSettingsSheet()">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div style="font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:4px">Settings & Backup</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:18px">Keep your data safe across devices and updates</div>
+
+    <!-- Backup status card -->
+    <div id="backupStatusCard" style="background:var(--bg);border-radius:14px;padding:14px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:500">Last backup</div>
+        <span class="status-pill" id="backupPill">—</span>
+      </div>
+      <div id="backupWhen" style="font-size:14px;font-weight:500;margin-top:6px">Never</div>
+      <div id="backupEntries" style="font-size:11px;color:var(--muted);margin-top:2px"></div>
+    </div>
+
+    <!-- Actions -->
+    <div class="settings-row" onclick="exportBackup()">
+      <div class="sr-ico">⬇️</div>
+      <div class="sr-body">
+        <div class="sr-title">Export backup (.json)</div>
+        <div class="sr-sub">Downloads a safe copy you can store anywhere — Drive, email, WhatsApp-to-self</div>
+      </div>
+      <div class="sr-arrow">›</div>
+    </div>
+
+    <div class="settings-row" onclick="document.getElementById('importFile').click()">
+      <div class="sr-ico">⬆️</div>
+      <div class="sr-body">
+        <div class="sr-title">Import from backup</div>
+        <div class="sr-sub">Restore from a .json file you previously exported</div>
+      </div>
+      <div class="sr-arrow">›</div>
+    </div>
+    <input type="file" class="file-input" id="importFile" accept=".json,application/json" onchange="importBackup(event)">
+
+    <div class="settings-row" onclick="copyToClipboard()">
+      <div class="sr-ico">📋</div>
+      <div class="sr-body">
+        <div class="sr-title">Copy data to clipboard</div>
+        <div class="sr-sub">Paste it anywhere as text — then use Import to restore</div>
+      </div>
+      <div class="sr-arrow">›</div>
+    </div>
+
+    <!-- Storage info -->
+    <div style="background:var(--bg);border-radius:12px;padding:12px 14px;margin-top:16px;font-size:12px;color:var(--muted);line-height:1.5">
+      <strong style="color:var(--ink);font-weight:500;display:block;margin-bottom:4px">💡 How your data is stored</strong>
+      Data lives in your browser's local storage. It <strong>survives</strong> closing the app, phone restart, and updates. It can be <strong>lost</strong> if you clear browser data, uninstall, or switch devices. Export backups weekly to stay safe.
+    </div>
+
+    <button class="danger-btn" onclick="resetAllData()">🗑 Erase all data</button>
+  </div>
+</div>
+
+<!-- ═══ STREAK SHEET ═══ -->
+<div class="overlay" id="streakOverlay" onclick="if(event.target===this)closeStreakSheet()">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="streak-big">
+      <div class="flame">🔥</div>
+      <div class="days"><span id="ssDays">0</span> day<span id="ssS">s</span></div>
+      <div class="lbl" id="ssLbl">Log a transaction every day to build your streak</div>
+    </div>
+    <div style="padding:0 6px 4px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:500;margin-top:8px">Last 4 weeks</div>
+    <div class="scal-header">
+      <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
+    </div>
+    <div class="streak-cal" id="streakCal"></div>
+    <div style="padding:12px;background:var(--gold-bg);border-radius:14px;margin-top:8px;font-size:13px;color:#92400E">
+      ❄️ <strong>Streak Freeze:</strong> <span id="freezeCount">0</span> available. Protects your streak if you miss a day.
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ACHIEVEMENTS SHEET ═══ -->
+<div class="overlay" id="achvOverlay" onclick="if(event.target===this)closeAchvSheet()">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div style="text-align:center;padding:10px 0 16px">
+      <div style="font-family:'DM Serif Display',serif;font-size:28px">Level <span id="asLvl">1</span></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px"><span id="asXp">0</span> XP · <span id="asXpNext">100</span> XP to next level</div>
+      <div style="height:8px;background:var(--border);border-radius:99px;margin:12px 20px 0;overflow:hidden">
+        <div id="asBar" style="height:100%;background:linear-gradient(90deg,var(--gold),#EA580C);width:0%;transition:width .5s"></div>
+      </div>
+    </div>
+    <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);padding:0 4px 10px;font-weight:500">Achievements</div>
+    <div class="achv-grid" id="achvGridSheet"></div>
+  </div>
+</div>
+
+<!-- ═══ BUDGET SHEET ═══ -->
+<div class="overlay" id="budgetOverlay" onclick="if(event.target===this)closeBudgetSheet()">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div style="font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:6px">Monthly budgets</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:18px">Set a spending cap for each bucket. We'll calculate your daily "safe to spend".</div>
+    <div id="budgetInputs"></div>
+    <button class="submit-btn" onclick="saveBudgets()">Save budgets</button>
+  </div>
+</div>
+
+<!-- ═══ GOAL SHEET ═══ -->
+<div class="overlay" id="goalOverlay" onclick="if(event.target===this)closeGoalSheet()">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div style="font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:18px">New savings goal</div>
+    <div style="margin-bottom:12px">
+      <label style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:500;display:block;margin-bottom:6px">Goal name</label>
+      <input type="text" class="desc-input" id="goalName" placeholder="e.g. New laptop, Goa trip" style="margin-bottom:0">
+    </div>
+    <div style="margin-bottom:12px">
+      <label style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:500;display:block;margin-bottom:6px">Target amount (₹)</label>
+      <input type="number" class="desc-input" id="goalTarget" placeholder="50000" style="margin-bottom:0">
+    </div>
+    <div style="margin-bottom:18px">
+      <label style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:500;display:block;margin-bottom:6px">Pick an emoji</label>
+      <div class="cat-chips" id="goalEmojis" style="max-height:none"></div>
+    </div>
+    <button class="submit-btn" onclick="createGoal()">Create goal</button>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════
+const B = {
+  e:{name:'Fun',   full:'Entertainment', sub:'Fun, leisure & lifestyle',  icon:'🎭', cls:'e',
+     cats:['🎬 Movies','🎮 Gaming','🍻 Dining Out','✈️ Travel','🎵 Streaming','🛍 Shopping','🎉 Events','📸 Hobbies']},
+  n:{name:'Needs', full:'Basic Needs',   sub:'Essentials & daily living', icon:'🏠', cls:'n',
+     cats:['🍔 Groceries','🏠 Rent','⚡ Utilities','🚌 Transport','💊 Health','👕 Clothing','📱 Phone','🏫 School']},
+  g:{name:'Growth',full:'Growth',        sub:'Business, learning & assets',icon:'🚀', cls:'g',
+     cats:['💼 Business','📣 Marketing','📚 Courses','💻 Tools','📈 Investment','🤝 Networking','💡 Project','🏗 Infra']},
+};
+const INC_CATS = ['💰 Salary','🧾 Freelance','💼 Revenue','📈 Returns','🎁 Gift','✨ Other'];
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const COLORS = {e:'#7C3AED',n:'#0369A1',g:'#B45309'};
+
+// Achievements master list
+const ACHIEVEMENTS = [
+  {id:'first',    ico:'🎯', name:'First Step',      desc:'Log your 1st transaction',    chk:d => d.txs.length >= 1},
+  {id:'streak3',  ico:'🔥', name:'On Fire',         desc:'3-day streak',                chk:d => d.streak >= 3},
+  {id:'streak7',  ico:'⚡', name:'Week Warrior',    desc:'7-day streak',                chk:d => d.streak >= 7},
+  {id:'streak30', ico:'👑', name:'Legend',          desc:'30-day streak',               chk:d => d.streak >= 30},
+  {id:'tx10',     ico:'📊', name:'Data Collector',  desc:'Log 10 transactions',         chk:d => d.txs.length >= 10},
+  {id:'tx50',     ico:'🏆', name:'Dedicated',       desc:'Log 50 transactions',         chk:d => d.txs.length >= 50},
+  {id:'save1k',   ico:'💰', name:'Saver',           desc:'Save ₹1,000 net',             chk:d => (d.totalInc - d.totalExp) >= 1000},
+  {id:'save10k',  ico:'💎', name:'Stacker',         desc:'Save ₹10,000 net',            chk:d => (d.totalInc - d.totalExp) >= 10000},
+  {id:'balanced', ico:'⚖️', name:'Balanced',        desc:'Spend across all 3 buckets',  chk:d => d.bucketsUsed === 3},
+  {id:'underBud', ico:'🎖️', name:'Under Budget',    desc:'Stay under any budget',       chk:d => d.underBudget},
+  {id:'goal1',    ico:'🎁', name:'Goal Getter',     desc:'Complete 1st goal',           chk:d => d.completedGoals >= 1},
+  {id:'growth',   ico:'📈', name:'Investor',        desc:'Log ₹5k in Growth',           chk:d => d.growthTotal >= 5000},
+];
+
+const GOAL_EMOJIS = ['💻','📱','🏠','🚗','✈️','🎓','💍','👶','🎸','📷','🏋️','🎮','💰','🎯','🌴','☕'];
+
+// XP ladder
+function xpForLevel(lvl) { return 100 + (lvl - 1) * 80; }
+function levelFromXp(xp) { let l=1, total=0; while(total + xpForLevel(l) <= xp){ total += xpForLevel(l); l++; } return { lvl:l, inLvl: xp-total, needLvl: xpForLevel(l) }; }
+
+// ════════════════════════════════════════
+// STATE (all persisted)
+// ════════════════════════════════════════
+const LS_KEY = 'paisaV3';
+const defaultState = {
+  txs: [],
+  goals: [],
+  budgets: { e:0, n:0, g:0 },
+  xp: 0,
+  streak: 0,
+  lastStreakDate: null,  // ISO date (YYYY-MM-DD)
+  streakDates: [],       // array of YYYY-MM-DD
+  freezes: 0,
+  unlockedAchv: [],
+  createdAt: Date.now(),
+  lastBackup: null,      // timestamp of last export
+};
+let state = Object.assign({}, defaultState, JSON.parse(localStorage.getItem(LS_KEY) || '{}'));
+state.budgets = Object.assign({e:0,n:0,g:0}, state.budgets || {});
+
+// Entry form state
+let txType = 'expense', txBucket = 'n', txCat = null, amtStr = '';
+let curFilter = 'all', curPage = 'home', goalEmoji = '💰';
+
+// ════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const fmt = n => Number(n).toLocaleString('en-IN');
+const todayISO = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+const save = () => localStorage.setItem(LS_KEY, JSON.stringify(state));
+const currentMonth = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; };
+const txMonth = t => { const d = new Date(t.id); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; };
+
+// ════════════════════════════════════════
+// NAV
+// ════════════════════════════════════════
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  $('page-' + id).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  curPage = id;
+  render();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ════════════════════════════════════════
+// RENDER
+// ════════════════════════════════════════
+function render() {
+  const thisMonth = currentMonth();
+  const monthTxs  = state.txs.filter(t => txMonth(t) === thisMonth);
+  const monthInc  = monthTxs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const monthExp  = monthTxs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const totalInc  = state.txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const totalExp  = state.txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+
+  const bTots = {};
+  Object.keys(B).forEach(k => { bTots[k] = monthTxs.filter(t=>t.type==='expense'&&t.bucket===k).reduce((s,t)=>s+t.amount,0); });
+
+  // TOP BAR
+  const lvlInfo = levelFromXp(state.xp);
+  $('tbXp').textContent = state.xp;
+  $('tbLvl').textContent = lvlInfo.lvl;
+  $('tbStreak').textContent = state.streak;
+  $('streakChip').classList.toggle('cold', state.streak === 0);
+
+  if (curPage === 'home') {
+    $('totBal').textContent = fmt(totalInc - totalExp);
+    $('totInc').textContent = fmt(monthInc);
+    $('totExp').textContent = fmt(monthExp);
+    renderSafeToSpend(monthExp, bTots);
+    renderQuickAdd();
+    renderDonut(bTots, monthExp);
+    renderList('recentList', [...state.txs].reverse().slice(0,5));
+    renderBackupBanner();
+  }
+  if (curPage === 'breakdown') renderBuckets(bTots, monthExp);
+  if (curPage === 'goals') { renderGoals(); renderAchievements('achvGrid'); }
+  if (curPage === 'history') renderHistory();
+
+  save();
+}
+
+// ── SAFE TO SPEND ──
+function renderSafeToSpend(monthExp, bTots) {
+  const totalBudget = state.budgets.e + state.budgets.n + state.budgets.g;
+  const card = $('safeCard');
+  if (!totalBudget) {
+    card.className = 'safe-card';
+    $('safeEmoji').textContent = '✨';
+    $('safeAmt').textContent = '₹—';
+    $('safeHint').innerHTML = '<span style="color:var(--accent);font-weight:500;cursor:pointer" onclick="openBudgetSheet()">Tap to set a monthly budget</span>';
+    $('safeAmt').classList.remove('over');
+    return;
+  }
+  const now = new Date();
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  const daysLeft = endOfMonth - now.getDate() + 1;
+  const remaining = totalBudget - monthExp;
+  const perDay = Math.max(remaining / daysLeft, 0);
+
+  card.className = 'safe-card';
+  let emoji = '✨', hint = `Stay under ₹${fmt(perDay.toFixed(0))}/day to end the month on track`;
+  if (remaining <= 0) { card.className = 'safe-card over'; emoji = '😬'; hint = `You're over budget by ₹${fmt(Math.abs(remaining))} — slow it down`; }
+  else if (perDay < totalBudget / endOfMonth * 0.6) { card.className = 'safe-card warn'; emoji = '⚠️'; hint = `${daysLeft} days left · pace carefully`; }
+
+  $('safeEmoji').textContent = emoji;
+  $('safeAmt').textContent = remaining > 0 ? `₹${fmt(perDay.toFixed(0))} / day` : `−₹${fmt(Math.abs(remaining))}`;
+  $('safeAmt').classList.toggle('over', remaining <= 0);
+  $('safeHint').textContent = hint;
+}
+
+// ── QUICK ADD ──
+function renderQuickAdd() {
+  // Last 5 unique (bucket + cat) combos with avg amount
+  const el = $('qaRow');
+  const seen = new Map();
+  [...state.txs].reverse().forEach(t => {
+    if (t.type !== 'expense') return;
+    const key = `${t.bucket}|${t.cat}`;
+    if (!seen.has(key)) seen.set(key, { bucket:t.bucket, cat:t.cat, amt:t.amount, count:1 });
+  });
+  const items = Array.from(seen.values()).slice(0, 6);
+  if (!items.length) {
+    el.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:8px 14px">Log a few expenses and your favorites will appear here for 1-tap re-entry</div>`;
+    return;
+  }
+  el.innerHTML = items.map(it => `
+    <button class="qa-chip" onclick="quickRepeat('${it.bucket}','${encodeURIComponent(it.cat)}',${it.amt})">
+      <div class="qa-ico">${it.cat.split(' ')[0]}</div>
+      <div class="qa-lbl">${it.cat.substring(it.cat.indexOf(' ')+1)}</div>
+      <div class="qa-amt">₹${fmt(it.amt)}</div>
+    </button>
+  `).join('');
+}
+
+function quickRepeat(bucket, cat, amt) {
+  cat = decodeURIComponent(cat);
+  const tx = { id: Date.now(), type:'expense', amount:amt, desc:'', cat, date:formatDate(new Date()), bucket };
+  commitTransaction(tx);
+  pushToast(`+₹${fmt(amt)} logged`, 'fire');
+}
+
+// ── DONUT ──
+function renderDonut(bTots, totalExp) {
+  const svg = $('donutSvg'), leg = $('donutLeg');
+  const r=36, cx=45, cy=45, circ = 2*Math.PI*r;
+  let offset=0, arcs='', legHTML='';
+  ['e','n','g'].forEach(k => {
+    const val = bTots[k] || 0;
+    const pct = totalExp > 0 ? val/totalExp : 0;
+    const dash = pct*circ, gap = circ-dash;
+    arcs += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${COLORS[k]}" stroke-width="12"
+      stroke-dasharray="${dash.toFixed(2)} ${gap.toFixed(2)}"
+      stroke-dashoffset="${(-(offset*circ - circ/4)).toFixed(2)}"/>`;
+    offset += pct;
+    const pStr = totalExp > 0 ? Math.round(pct*100)+'%' : '—';
+    legHTML += `<div class="leg-row"><div class="leg-dot" style="background:${COLORS[k]}"></div><div class="leg-lbl">${B[k].full}</div><div class="leg-val">₹${fmt(val)} <span style="color:var(--muted);font-size:11px">${pStr}</span></div></div>`;
+  });
+  svg.innerHTML = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#E8E4DC" stroke-width="12"/>` + arcs;
+  leg.innerHTML = legHTML;
+}
+
+// ── BUCKETS (Breakdown) ──
+function renderBuckets(bTots, totExp) {
+  const el = $('bucketList');
+  el.innerHTML = ['e','n','g'].map(k => {
+    const b = B[k];
+    const val = bTots[k] || 0;
+    const budget = state.budgets[k] || 0;
+    const pct = budget > 0 ? Math.round((val/budget)*100) : 0;
+    const over = budget > 0 && val > budget;
+    const w = budget > 0 ? Math.min((val/budget)*100, 100) : (totExp > 0 ? (val/totExp)*100 : 2);
+
+    const subTags = b.cats.map(cat => {
+      const cv = state.txs.filter(t => t.type==='expense'&&t.bucket===k&&t.cat===cat&&txMonth(t)===currentMonth()).reduce((s,t)=>s+t.amount,0);
+      return cv ? `<span class="bkt-tag ${k}">${cat.split(' ')[0]} ₹${fmt(cv)}</span>` : '';
+    }).join('');
+
+    return `<div class="bucket">
+      <div class="bucket-hdr">
+        <div class="bkt-icon ${k}">${b.icon}</div>
+        <div class="bkt-meta">
+          <div class="bkt-name">${b.full}</div>
+          <div class="bkt-sub">${b.sub}</div>
+        </div>
+        <div class="bkt-right">
+          <div class="bkt-total ${k}">₹${fmt(val)}</div>
+          ${budget > 0 ? `<div class="bkt-of">of ₹${fmt(budget)}</div>` : `<div class="bkt-of">no budget</div>`}
+        </div>
+      </div>
+      <div class="bar-bg"><div class="bar-fill ${k} ${over?'bar-over':''}" style="width:${w}%"></div></div>
+      <div class="bar-meta"><span>${budget > 0 ? pct+'%' : ''}</span><span>${over?'⚠️ Over budget':''}</span></div>
+      ${subTags ? `<div class="bkt-tags">${subTags}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ── GOALS ──
+function renderGoals() {
+  const el = $('goalList');
+  if (!state.goals.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-ico">🎯</div><p>No goals yet.<br>Set one to give your savings purpose.</p></div>`;
+    return;
+  }
+  el.innerHTML = state.goals.map(g => {
+    const pct = Math.min(Math.round((g.saved/g.target)*100), 100);
+    const done = g.saved >= g.target;
+    return `<div class="goal-card">
+      <div class="goal-head">
+        <div class="goal-ico">${done ? '🎉' : g.emoji}</div>
+        <div class="goal-meta">
+          <div class="goal-name">${g.name}${done ? ' <span style="color:var(--accent);font-size:11px">✓ Complete!</span>' : ''}</div>
+          <div class="goal-sub">${done ? 'Goal reached — great work!' : `₹${fmt(g.target - g.saved)} to go`}</div>
+        </div>
+        <div class="goal-pct">${pct}%</div>
+      </div>
+      <div class="goal-bar"><div class="goal-bar-fill" style="width:${pct}%"></div></div>
+      <div class="goal-nums"><span>Saved: <strong>₹${fmt(g.saved)}</strong></span><span>Target: <strong>₹${fmt(g.target)}</strong></span></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="tab" style="flex:1" onclick="addToGoal(${g.id}, 100)">+₹100</button>
+        <button class="tab" style="flex:1" onclick="addToGoal(${g.id}, 500)">+₹500</button>
+        <button class="tab" style="flex:1" onclick="addToGoal(${g.id}, 1000)">+₹1000</button>
+        <button class="tab" style="padding:6px 10px" onclick="promptCustomGoalAdd(${g.id})">+ ₹</button>
+        <button class="tab" style="padding:6px 10px;color:var(--danger);border-color:var(--danger-light)" onclick="deleteGoal(${g.id})">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function addToGoal(id, amt) {
+  const g = state.goals.find(g => g.id === id);
+  if (!g) return;
+  const wasDone = g.saved >= g.target;
+  g.saved += amt;
+  if (!wasDone && g.saved >= g.target) {
+    pushToast(`🎉 Goal complete: ${g.name}!`, 'gold');
+    confetti();
+    grantXp(100);
+  } else {
+    pushToast(`+₹${fmt(amt)} toward ${g.name}`);
+    grantXp(5);
+  }
+  render();
+}
+function promptCustomGoalAdd(id) {
+  const v = prompt('Add how much (₹)?');
+  const n = parseFloat(v);
+  if (!isNaN(n) && n > 0) addToGoal(id, n);
+}
+function deleteGoal(id) {
+  if (!confirm('Delete this goal?')) return;
+  state.goals = state.goals.filter(g => g.id !== id);
+  render();
+}
+
+// ── ACHIEVEMENTS ──
+function getAchvContext() {
+  const monthTxs = state.txs.filter(t => txMonth(t) === currentMonth());
+  const bucketsUsed = new Set(monthTxs.filter(t=>t.type==='expense').map(t=>t.bucket)).size;
+  const totalInc = state.txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const totalExp = state.txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const growthTotal = state.txs.filter(t=>t.type==='expense'&&t.bucket==='g').reduce((s,t)=>s+t.amount,0);
+
+  // Under budget check
+  let underBudget = false;
+  Object.keys(B).forEach(k => {
+    if (state.budgets[k] > 0) {
+      const mv = monthTxs.filter(t=>t.type==='expense'&&t.bucket===k).reduce((s,t)=>s+t.amount,0);
+      if (mv > 0 && mv < state.budgets[k]) underBudget = true;
+    }
+  });
+  const completedGoals = state.goals.filter(g => g.saved >= g.target).length;
+
+  return { txs: state.txs, streak: state.streak, totalInc, totalExp, bucketsUsed, underBudget, growthTotal, completedGoals };
+}
+
+function renderAchievements(containerId) {
+  const ctx = getAchvContext();
+  const el = $(containerId);
+  const got = state.unlockedAchv.length;
+  const tot = ACHIEVEMENTS.length;
+  if ($('achvCount')) $('achvCount').textContent = `${got}/${tot}`;
+  el.innerHTML = ACHIEVEMENTS.map(a => {
+    const unlocked = state.unlockedAchv.includes(a.id);
+    return `<div class="achv ${unlocked?'unlocked':'locked'}">
+      <div class="achv-ico">${a.ico}</div>
+      <div class="achv-name">${a.name}</div>
+      <div class="achv-desc">${a.desc}</div>
+    </div>`;
+  }).join('');
+}
+
+function checkAchievements() {
+  const ctx = getAchvContext();
+  ACHIEVEMENTS.forEach(a => {
+    if (!state.unlockedAchv.includes(a.id) && a.chk(ctx)) {
+      state.unlockedAchv.push(a.id);
+      pushToast(`🏆 Achievement unlocked: ${a.name}`, 'gold');
+      grantXp(50, true);
+      confetti();
+    }
+  });
+}
+
+// ── HISTORY ──
+function renderHistory() {
+  let list;
+  if (curFilter === 'all')       list = state.txs;
+  else if (curFilter === 'income')  list = state.txs.filter(t=>t.type==='income');
+  else if (curFilter === 'expense') list = state.txs.filter(t=>t.type==='expense');
+  else list = state.txs.filter(t=>t.bucket === curFilter);
+  $('txCount').textContent = `${list.length} ${list.length===1?'entry':'entries'}`;
+  renderList('txList', [...list].reverse());
+}
+
+function renderList(id, list) {
+  const el = $(id);
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-ico">₹</div><p>Nothing here yet.<br>Tap <strong>+ Log</strong> below.</p></div>`;
+    return;
+  }
+  el.innerHTML = list.map((t,i) => {
+    const emoji = t.cat ? t.cat.split(' ')[0] : (t.type==='income'?'💰':'📦');
+    const btag = t.bucket ? `<div class="tx-btag ${t.bucket}">${B[t.bucket].icon} ${B[t.bucket].name}</div>` : '';
+    return `<div class="tx-item" style="animation-delay:${i*.03}s" onclick="openTxActions(${t.id})">
+      <div class="tx-icon ${t.type==='income'?'ii':'ei'}">${emoji}</div>
+      <div class="tx-info">
+        <div class="tx-name">${t.desc || t.cat || '—'}</div>
+        <div class="tx-meta">${t.cat || ''} · ${t.date}</div>
+      </div>
+      <div class="tx-right">
+        <div class="tx-amt ${t.type==='income'?'inc':'exp'}">${t.type==='income'?'+':'−'}₹${fmt(t.amount)}</div>
+        ${btag}
+      </div>
+      <div style="color:var(--muted);font-size:18px;padding-left:4px;opacity:.4">⋯</div>
+    </div>`;
+  }).join('');
+}
+
+function filterTx(f, el) {
+  curFilter = f;
+  document.querySelectorAll('#filterTabs .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+// ════════════════════════════════════════
+// ENTRY SHEET (the fast logger)
+// ════════════════════════════════════════
+function openSheet() {
+  $('overlay').classList.add('open');
+  amtStr = '';
+  txType = 'expense'; txBucket = 'n'; txCat = null;
+  setType('expense'); setBucket('n');
+  updateAmt();
+  $('descIn').value = '';
+}
+function closeSheet() { $('overlay').classList.remove('open'); }
+
+function setType(t) {
+  txType = t;
+  $('btnInc').className = 'type-btn'+(t==='income'?' active income':'');
+  $('btnExp').className = 'type-btn'+(t==='expense'?' active expense':'');
+  $('bktWrap').style.display = t === 'expense' ? 'block' : 'none';
+  renderCatChips();
+}
+
+function setBucket(b) {
+  txBucket = b;
+  ['e','n','g'].forEach(k => { $('pill-'+k).className = 'bkt-pill'+(b===k?' a'+b:''); });
+  txCat = null;
+  renderCatChips();
+}
+
+function renderCatChips() {
+  const cats = txType === 'income' ? INC_CATS : (B[txBucket]?.cats || []);
+  if (!txCat) txCat = cats[0];
+  $('catChips').innerHTML = cats.map(c => `
+    <button class="cat-chip${txCat===c?' active':''}" onclick="pickCat('${encodeURIComponent(c)}')">${c}</button>
+  `).join('');
+}
+function pickCat(c) { txCat = decodeURIComponent(c); renderCatChips(); }
+
+function keyPress(k) {
+  if (k === 'back') { amtStr = amtStr.slice(0, -1); }
+  else {
+    if (amtStr.length >= 9) return;
+    amtStr += k;
+  }
+  updateAmt();
+}
+function updateAmt() {
+  const disp = $('amtDisplay');
+  const txt = $('amtText');
+  const val = parseFloat(amtStr || '0');
+  txt.textContent = amtStr ? fmt(val) : '0';
+  disp.classList.toggle('empty', !amtStr);
+  $('submitBtn').disabled = !val || val <= 0;
+}
+
+function formatDate(d) { return `${d.getDate()} ${MONTHS[d.getMonth()]}`; }
+
+function addTx() {
+  const amt = parseFloat(amtStr);
+  if (!amt || amt <= 0) return;
+  const desc = $('descIn').value.trim();
+  const now = new Date();
+  const tx = {
+    id: Date.now(), type: txType, amount: amt, desc, cat: txCat,
+    date: formatDate(now),
+    bucket: txType === 'expense' ? txBucket : null,
+  };
+  commitTransaction(tx);
+  closeSheet();
+}
+
+function commitTransaction(tx) {
+  state.txs.push(tx);
+  // XP: +10 per transaction
+  grantXp(10);
+  // Streak update
+  updateStreak();
+  // Achievements
+  checkAchievements();
+  // Budget alerts
+  checkBudgetPace(tx);
+  render();
+}
+
+function delTx(id) {
+  state.txs = state.txs.filter(t => t.id !== id);
+  render();
+}
+
+// ════════════════════════════════════════
+// TX ACTION MENU (Edit / Delete)
+// ════════════════════════════════════════
+let activeTxId = null;   // which tx is being acted on
+let editType   = 'expense';
+let editBucket = 'n';
+
+function openTxActions(id) {
+  activeTxId = id;
+  const t = state.txs.find(t => t.id === id);
+  if (!t) return;
+
+  // Render preview card
+  const emoji = t.cat ? t.cat.split(' ')[0] : (t.type==='income'?'💰':'📦');
+  const btag  = t.bucket ? `<span class="tx-btag ${t.bucket}" style="margin-left:6px">${B[t.bucket].icon} ${B[t.bucket].name}</span>` : '';
+  $('actionPreview').innerHTML = `
+    <div class="action-tx-ico ${t.type==='income'?'ii':'ei'}" style="background:${t.type==='income'?'var(--accent-light)':'var(--danger-light)'}">${emoji}</div>
+    <div style="flex:1;min-width:0">
+      <div class="action-tx-name">${t.desc || t.cat || '—'}</div>
+      <div class="action-tx-meta">${t.cat || ''}${btag} · ${t.date}</div>
+    </div>
+    <div class="action-tx-amt ${t.type==='income'?'inc':'exp'}">${t.type==='income'?'+':'−'}₹${fmt(t.amount)}</div>
+  `;
+  $('txActionOverlay').classList.add('open');
+}
+
+function closeTxActions() {
+  $('txActionOverlay').classList.remove('open');
+}
+
+function confirmDeleteTx() {
+  closeTxActions();
+  // Small delay so sheet closes before confirm shows
+  setTimeout(() => {
+    const t = state.txs.find(t => t.id === activeTxId);
+    if (!t) return;
+    if (confirm(`Delete "${t.desc || t.cat || 'this entry'}"?\n₹${fmt(t.amount)} on ${t.date}`)) {
+      delTx(activeTxId);
+      pushToast('Entry deleted');
+    }
+  }, 300);
+}
+
+// ── EDIT SHEET ──────────────────────────
+function openEditSheet() {
+  closeTxActions();
+  const t = state.txs.find(t => t.id === activeTxId);
+  if (!t) return;
+
+  editType   = t.type;
+  editBucket = t.bucket || 'n';
+
+  // Pre-fill fields
+  $('editAmt').value  = t.amount;
+  $('editDesc').value = t.desc || '';
+
+  // Type buttons
+  editSetType(t.type, true);
+
+  // Bucket
+  if (t.type === 'expense') editSetBucket(t.bucket || 'n', true);
+
+  // Category dropdown — pre-select the existing cat
+  populateEditCats(t.cat);
+
+  setTimeout(() => $('editOverlay').classList.add('open'), 320);
+}
+
+function closeEditSheet() {
+  $('editOverlay').classList.remove('open');
+}
+
+function editSetType(type, silent) {
+  editType = type;
+  $('editBtnInc').className = 'type-btn' + (type==='income'  ? ' active income'  : '');
+  $('editBtnExp').className = 'type-btn' + (type==='expense' ? ' active expense' : '');
+  $('editBktWrap').style.display = type === 'expense' ? 'block' : 'none';
+  if (!silent) populateEditCats(null);
+}
+
+function editSetBucket(b, silent) {
+  editBucket = b;
+  ['e','n','g'].forEach(k => {
+    $('editPill-'+k).className = 'bkt-pill' + (b===k ? ' a'+b : '');
+  });
+  if (!silent) populateEditCats(null);
+}
+
+function populateEditCats(preselect) {
+  const cats = editType === 'income' ? INC_CATS : (B[editBucket]?.cats || []);
+  const sel  = $('editCat');
+  sel.innerHTML = cats.map(c => `<option value="${c}" ${c===preselect?'selected':''}>${c}</option>`).join('');
+}
+
+function saveEdit() {
+  const amt = parseFloat($('editAmt').value);
+  if (!amt || amt <= 0) { $('editAmt').focus(); return; }
+
+  const idx = state.txs.findIndex(t => t.id === activeTxId);
+  if (idx === -1) return;
+
+  const old = state.txs[idx];
+  state.txs[idx] = {
+    ...old,
+    type:   editType,
+    amount: amt,
+    cat:    $('editCat').value,
+    desc:   $('editDesc').value.trim(),
+    bucket: editType === 'expense' ? editBucket : null,
+  };
+
+  closeEditSheet();
+  pushToast('✓ Transaction updated');
+  render();
+}
+
+// ════════════════════════════════════════
+// STREAK SYSTEM
+// ════════════════════════════════════════
+function updateStreak() {
+  const today = todayISO();
+  if (state.lastStreakDate === today) {
+    // Already counted today
+    if (!state.streakDates.includes(today)) state.streakDates.push(today);
+    return;
+  }
+  // Compute diff from last streak date
+  if (!state.lastStreakDate) {
+    state.streak = 1;
+  } else {
+    const last = new Date(state.lastStreakDate);
+    const now  = new Date(today);
+    const diff = Math.round((now - last) / (1000*60*60*24));
+    if (diff === 1) {
+      state.streak += 1;
+      pushToast(`🔥 ${state.streak}-day streak!`, 'fire');
+    } else if (diff > 1) {
+      // Broken — use freeze if available
+      if (state.freezes > 0 && diff === 2) {
+        state.freezes -= 1;
+        state.streak += 1;
+        pushToast(`❄️ Streak Freeze used! You're still on fire.`, 'fire');
+      } else {
+        state.streak = 1;
+        pushToast(`Streak restarted — day 1!`);
+      }
+    }
+  }
+  state.lastStreakDate = today;
+  if (!state.streakDates.includes(today)) state.streakDates.push(today);
+
+  // Grant a streak freeze every 7 days
+  if (state.streak > 0 && state.streak % 7 === 0) {
+    state.freezes += 1;
+    pushToast(`❄️ You earned a Streak Freeze!`, 'gold');
+  }
+}
+
+// ════════════════════════════════════════
+// XP & LEVELS
+// ════════════════════════════════════════
+function grantXp(amt, silent) {
+  const before = levelFromXp(state.xp).lvl;
+  state.xp += amt;
+  const after = levelFromXp(state.xp).lvl;
+  if (!silent) pushToast(`+${amt} XP`);
+  if (after > before) {
+    pushToast(`⭐ Level up! You're Level ${after}`, 'gold');
+    confetti();
+  }
+}
+
+// ════════════════════════════════════════
+// BUDGET PACE WARNING
+// ════════════════════════════════════════
+function checkBudgetPace(tx) {
+  if (tx.type !== 'expense' || !state.budgets[tx.bucket]) return;
+  const monthExp = state.txs.filter(t => t.type==='expense'&&t.bucket===tx.bucket&&txMonth(t)===currentMonth()).reduce((s,t)=>s+t.amount,0);
+  const budget = state.budgets[tx.bucket];
+  const pct = monthExp / budget;
+  if (pct >= 1 && (pct - (tx.amount/budget)) < 1) pushToast(`⚠️ Over ${B[tx.bucket].full} budget!`, 'fire');
+  else if (pct >= 0.8 && (pct - (tx.amount/budget)) < 0.8) pushToast(`⚠️ 80% of ${B[tx.bucket].full} budget used`);
+}
+
+// ════════════════════════════════════════
+// STREAK SHEET
+// ════════════════════════════════════════
+function openStreakSheet() {
+  $('streakOverlay').classList.add('open');
+  $('ssDays').textContent = state.streak;
+  $('ssS').textContent = state.streak === 1 ? '' : 's';
+  $('ssLbl').textContent = state.streak > 0
+    ? `Keep logging daily to grow your streak!`
+    : `Log a transaction today to start your streak`;
+  $('freezeCount').textContent = state.freezes;
+  // Render 28-day (4 week) calendar, ending today
+  const cal = $('streakCal');
+  const today = new Date();
+  const todayStr = todayISO();
+  // Start from 27 days ago, end today
+  let html = '';
+  // We need to align to weekday. Start from beginning of week containing (today - 27d)
+  const start = new Date(today); start.setDate(start.getDate() - 27);
+  // Roll back to Sunday
+  start.setDate(start.getDate() - start.getDay());
+  const end = new Date(today);
+  const cur = new Date(start);
+  while (cur <= end || cur.getDay() !== 0) {
+    const iso = `${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}-${String(cur.getDate()).padStart(2,'0')}`;
+    const isActive = state.streakDates.includes(iso);
+    const isToday  = iso === todayStr;
+    const isFuture = cur > today;
+    const isShown  = cur >= start;
+    html += `<div class="scal-d ${isActive?'active':''} ${isToday?'today':''}" style="${isFuture?'opacity:.25':''}">${cur.getDate()}</div>`;
+    cur.setDate(cur.getDate() + 1);
+    if (cur > end && cur.getDay() === 0) break;
+  }
+  cal.innerHTML = html;
+}
+function closeStreakSheet() { $('streakOverlay').classList.remove('open'); }
+
+// ════════════════════════════════════════
+// ACHIEVEMENTS SHEET
+// ════════════════════════════════════════
+function openAchvSheet() {
+  $('achvOverlay').classList.add('open');
+  const info = levelFromXp(state.xp);
+  $('asLvl').textContent = info.lvl;
+  $('asXp').textContent = state.xp;
+  $('asXpNext').textContent = info.needLvl - info.inLvl;
+  $('asBar').style.width = (info.inLvl / info.needLvl * 100) + '%';
+  renderAchievements('achvGridSheet');
+}
+function closeAchvSheet() { $('achvOverlay').classList.remove('open'); }
+
+// ════════════════════════════════════════
+// BUDGET SHEET
+// ════════════════════════════════════════
+function openBudgetSheet() {
+  $('budgetOverlay').classList.add('open');
+  $('budgetInputs').innerHTML = ['e','n','g'].map(k => `
+    <div style="margin-bottom:14px">
+      <label style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:500;display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <span style="font-size:16px">${B[k].icon}</span> ${B[k].full}
+      </label>
+      <input type="number" class="desc-input" id="bgt-${k}" value="${state.budgets[k] || ''}" placeholder="0" style="margin-bottom:0">
+    </div>
+  `).join('');
+}
+function closeBudgetSheet() { $('budgetOverlay').classList.remove('open'); }
+function saveBudgets() {
+  ['e','n','g'].forEach(k => { state.budgets[k] = parseFloat($('bgt-'+k).value) || 0; });
+  closeBudgetSheet();
+  pushToast('✓ Budgets saved');
+  render();
+}
+
+// ════════════════════════════════════════
+// GOAL SHEET
+// ════════════════════════════════════════
+function openGoalSheet() {
+  $('goalOverlay').classList.add('open');
+  $('goalName').value = '';
+  $('goalTarget').value = '';
+  goalEmoji = '💰';
+  $('goalEmojis').innerHTML = GOAL_EMOJIS.map(e => `<button class="cat-chip${goalEmoji===e?' active':''}" onclick="pickGoalEmoji('${e}')" style="font-size:18px">${e}</button>`).join('');
+}
+function closeGoalSheet() { $('goalOverlay').classList.remove('open'); }
+function pickGoalEmoji(e) {
+  goalEmoji = e;
+  $('goalEmojis').innerHTML = GOAL_EMOJIS.map(em => `<button class="cat-chip${goalEmoji===em?' active':''}" onclick="pickGoalEmoji('${em}')" style="font-size:18px">${em}</button>`).join('');
+}
+function createGoal() {
+  const name = $('goalName').value.trim();
+  const target = parseFloat($('goalTarget').value);
+  if (!name || !target || target <= 0) return;
+  state.goals.push({ id: Date.now(), name, target, saved: 0, emoji: goalEmoji });
+  closeGoalSheet();
+  pushToast('🎯 Goal created!', 'gold');
+  grantXp(20);
+  render();
+}
+
+// ════════════════════════════════════════
+// TOAST & CONFETTI
+// ════════════════════════════════════════
+function pushToast(msg, kind) {
+  const layer = $('toastLayer');
+  const t = document.createElement('div');
+  t.className = 'toast' + (kind ? ' ' + kind : '');
+  t.innerHTML = msg;
+  layer.appendChild(t);
+  setTimeout(() => t.remove(), 3100);
+}
+
+function confetti() {
+  const colors = ['#F59E0B','#EA580C','#2D6A4F','#7C3AED','#0369A1'];
+  for (let i = 0; i < 30; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.cssText = `left:${Math.random()*100}vw;width:8px;height:12px;background:${colors[i%colors.length]};border-radius:2px;transform:rotate(${Math.random()*360}deg);animation-delay:${Math.random()*0.3}s`;
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 3000);
+  }
+}
+
+// ════════════════════════════════════════
+// KEYBOARD
+// ════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  const open = $('overlay').classList.contains('open');
+  if (open) {
+    if (e.key === 'Escape') closeSheet();
+    else if (e.key === 'Enter') addTx();
+    else if (/^\d$/.test(e.key)) keyPress(e.key);
+    else if (e.key === 'Backspace' && e.target.tagName !== 'INPUT') keyPress('back');
+  }
+  if (e.key === 'Escape') {
+    ['streakOverlay','achvOverlay','budgetOverlay','goalOverlay','settingsOverlay','txActionOverlay','editOverlay'].forEach(id => $(id).classList.remove('open'));
+  }
+});
+
+// ════════════════════════════════════════
+// BACKUP & RESTORE
+// ════════════════════════════════════════
+
+// How old the last backup is (in days). null if never.
+function backupAgeDays() {
+  if (!state.lastBackup) return null;
+  return Math.floor((Date.now() - state.lastBackup) / (1000 * 60 * 60 * 24));
+}
+
+// Show backup banner on Home when overdue
+function renderBackupBanner() {
+  const banner = $('backupBanner');
+  const age = backupAgeDays();
+  const hasData = state.txs.length >= 3; // don't nag empty-app users
+
+  // Show only if: user has real data AND (never backed up OR >= 7 days old)
+  const shouldShow = hasData && (age === null || age >= 7);
+  banner.style.display = shouldShow ? 'flex' : 'none';
+
+  if (!shouldShow) return;
+
+  if (age === null) {
+    banner.className = 'backup-banner';
+    $('bbIco').textContent = '💾';
+    $('bbTitle').textContent = 'Back up your data';
+    $('bbSub').textContent = `You have ${state.txs.length} entries — protect them with 1 tap`;
+  } else if (age >= 14) {
+    banner.className = 'backup-banner danger';
+    $('bbIco').textContent = '⚠️';
+    $('bbTitle').textContent = `Last backup was ${age} days ago`;
+    $('bbSub').textContent = 'Tap to export a fresh copy now';
+  } else {
+    banner.className = 'backup-banner';
+    $('bbIco').textContent = '💾';
+    $('bbTitle').textContent = `Last backup: ${age} day${age===1?'':'s'} ago`;
+    $('bbSub').textContent = 'Tap to refresh your backup';
+  }
+}
+
+// Open settings sheet
+function openSettingsSheet() {
+  $('settingsOverlay').classList.add('open');
+  updateBackupStatusCard();
+}
+function closeSettingsSheet() { $('settingsOverlay').classList.remove('open'); }
+
+function updateBackupStatusCard() {
+  const pill = $('backupPill');
+  const when = $('backupWhen');
+  const entries = $('backupEntries');
+  const age = backupAgeDays();
+
+  if (age === null) {
+    pill.className = 'status-pill danger';
+    pill.textContent = 'NO BACKUP';
+    when.textContent = 'Never backed up';
+  } else if (age === 0) {
+    pill.className = 'status-pill safe';
+    pill.textContent = 'SAFE';
+    when.textContent = 'Today';
+  } else if (age < 7) {
+    pill.className = 'status-pill safe';
+    pill.textContent = 'SAFE';
+    when.textContent = `${age} day${age===1?'':'s'} ago`;
+  } else if (age < 14) {
+    pill.className = 'status-pill warn';
+    pill.textContent = 'GETTING OLD';
+    when.textContent = `${age} days ago`;
+  } else {
+    pill.className = 'status-pill danger';
+    pill.textContent = 'OUT OF DATE';
+    when.textContent = `${age} days ago`;
+  }
+  entries.textContent = `${state.txs.length} transaction${state.txs.length===1?'':'s'} · ${state.goals.length} goal${state.goals.length===1?'':'s'}`;
+}
+
+// EXPORT — download JSON file
+function exportBackup() {
+  const payload = {
+    app: 'Paisa',
+    version: 3,
+    exportedAt: new Date().toISOString(),
+    data: state,
+  };
+  const json = JSON.stringify(payload, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date();
+  const stamp = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  a.href = url;
+  a.download = `paisa-backup-${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  state.lastBackup = Date.now();
+  save();
+  pushToast('✓ Backup saved to Downloads', 'gold');
+  updateBackupStatusCard();
+  renderBackupBanner();
+}
+
+// COPY TO CLIPBOARD — paste anywhere as text
+async function copyToClipboard() {
+  const payload = {
+    app: 'Paisa',
+    version: 3,
+    exportedAt: new Date().toISOString(),
+    data: state,
+  };
+  const json = JSON.stringify(payload);
+  try {
+    await navigator.clipboard.writeText(json);
+    state.lastBackup = Date.now();
+    save();
+    pushToast('✓ Copied! Paste it in notes/email to save', 'gold');
+    updateBackupStatusCard();
+    renderBackupBanner();
+  } catch (err) {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = json;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); pushToast('✓ Copied to clipboard'); }
+    catch { pushToast('⚠️ Copy failed — try export instead'); }
+    document.body.removeChild(ta);
+  }
+}
+
+// IMPORT — restore from JSON file
+function importBackup(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      const imported = parsed.data || parsed; // accept either wrapped or raw
+
+      // Validate basic shape
+      if (!imported.txs || !Array.isArray(imported.txs)) {
+        throw new Error('Invalid backup file');
+      }
+
+      const currentCount = state.txs.length;
+      const incomingCount = imported.txs.length;
+
+      const msg = currentCount > 0
+        ? `Restore ${incomingCount} transactions from backup?\n\nThis will REPLACE your current data (${currentCount} entries).`
+        : `Restore ${incomingCount} transactions from backup?`;
+
+      if (!confirm(msg)) {
+        event.target.value = ''; // reset input
+        return;
+      }
+
+      // Merge with defaults to handle old backup formats safely
+      state = Object.assign({}, defaultState, imported);
+      state.budgets = Object.assign({e:0,n:0,g:0}, state.budgets || {});
+      save();
+      pushToast(`✓ Restored ${incomingCount} entries!`, 'gold');
+      confetti();
+      closeSettingsSheet();
+      render();
+    } catch (err) {
+      alert('Could not read backup file. Make sure it\'s a Paisa .json backup.');
+    }
+    event.target.value = ''; // allow re-import of same file
+  };
+  reader.readAsText(file);
+}
+
+// RESET ALL
+function resetAllData() {
+  if (!confirm('⚠️ Erase ALL data?\n\nThis deletes every transaction, goal, streak, and achievement. This cannot be undone.\n\nDid you export a backup first?')) return;
+  if (!confirm('Really sure? Last chance.')) return;
+  state = JSON.parse(JSON.stringify(defaultState));
+  save();
+  closeSettingsSheet();
+  pushToast('All data erased');
+  render();
+}
+
+// ════════════════════════════════════════
+// INCOGNITO / PRIVATE MODE DETECTION
+// ════════════════════════════════════════
+function detectEphemeralStorage() {
+  try {
+    // Test if localStorage writes actually persist by writing & reading a token
+    const testKey = '__paisa_storage_test__';
+    localStorage.setItem(testKey, '1');
+    const ok = localStorage.getItem(testKey) === '1';
+    localStorage.removeItem(testKey);
+    if (!ok) return true;
+
+    // Some incognito modes allow writes but in very small quota — check storage estimate
+    if (navigator.storage && navigator.storage.estimate) {
+      navigator.storage.estimate().then(e => {
+        // Private mode in some browsers reports < 120MB quota
+        if (e.quota && e.quota < 120000000) {
+          $('incogWarn').style.display = 'block';
+        }
+      }).catch(() => {});
+    }
+    return false;
+  } catch {
+    return true; // localStorage fully blocked
+  }
+}
+
+if (detectEphemeralStorage()) {
+  $('incogWarn').style.display = 'block';
+}
+
+// ════════════════════════════════════════
+// BOOT
+// ════════════════════════════════════════
+render();
+
+// If user hasn't logged today, give gentle nudge via chip pulse (already handled via .cold class)
+</script>
+</body>
+</html>
