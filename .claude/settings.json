@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/study/excel/paisa-pwa/paisa-pwa/**)",
+      "Bash(node --input-type=module)"
+    ]
+  }
+}
