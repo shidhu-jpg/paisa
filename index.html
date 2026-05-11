@@ -149,53 +149,182 @@
       margin-right: 2px
     }
 
-    /* ═══ NAV ═══ */
+    /* ═══ BOTTOM NAV ═══ */
     .nav {
       display: flex;
-      background: var(--bg);
-      border-bottom: 1.5px solid var(--border);
-      position: sticky;
-      top: 50px;
-      z-index: 14;
-      padding: 0 12px;
+      background: var(--surface);
+      border-top: 1.5px solid var(--border);
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 20;
+      padding: 6px 0 max(env(safe-area-inset-bottom, 0px), 6px);
+      box-shadow: 0 -4px 24px rgba(26,24,20,.07)
     }
 
     .nav-tab {
       flex: 1;
-      padding: 10px 4px 12px;
+      padding: 4px 2px 2px;
       border: none;
       background: transparent;
-      font-size: 13px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: color .18s, transform .15s;
+      -webkit-tap-highlight-color: transparent
+    }
+
+    .nav-tab:active { transform: scale(.88) }
+
+    .nav-tab .nav-ico {
+      font-size: 21px;
+      line-height: 1;
+      transition: transform .2s
+    }
+
+    .nav-tab .nav-lbl {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: .3px;
+      text-transform: uppercase
+    }
+
+    .nav-tab.active { color: var(--accent) }
+    .nav-tab.active .nav-ico { transform: translateY(-2px) scale(1.1) }
+
+    /* FAB */
+    .fab {
+      position: fixed;
+      bottom: 78px;
+      right: 18px;
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #2D6A4F, #1B4332);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      font-size: 30px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 24px rgba(45,106,79,.4);
+      cursor: pointer;
+      z-index: 19;
+      transition: transform .15s, box-shadow .15s
+    }
+
+    .fab:active {
+      transform: scale(.91);
+      box-shadow: 0 3px 12px rgba(45,106,79,.2)
+    }
+
+    /* Custom confirm / prompt dialog */
+    .cdialog-bg {
+      position: fixed;
+      inset: 0;
+      background: rgba(26,24,20,.45);
+      z-index: 55;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s
+    }
+
+    .cdialog-bg.open {
+      opacity: 1;
+      pointer-events: all
+    }
+
+    .cdialog {
+      width: 100%;
+      max-width: 480px;
+      background: var(--surface);
+      border-radius: 24px 24px 0 0;
+      padding: 22px 22px 40px;
+      transform: translateY(100%);
+      transition: transform .3s cubic-bezier(.32,0,.15,1)
+    }
+
+    .cdialog-bg.open .cdialog { transform: translateY(0) }
+
+    .cdialog-ico { font-size: 36px; text-align: center; margin-bottom: 10px }
+    .cdialog-title { font-size: 17px; font-weight: 600; text-align: center; margin-bottom: 6px; line-height: 1.35 }
+    .cdialog-sub { font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 22px; line-height: 1.5 }
+
+    .cdialog-btns { display: flex; gap: 10px }
+
+    .cdialog-cancel {
+      flex: 1;
+      padding: 14px;
+      border: 1.5px solid var(--border);
+      background: transparent;
+      border-radius: 14px;
+      font-size: 15px;
+      font-family: inherit;
       font-weight: 500;
       color: var(--muted);
-      border-bottom: 2.5px solid transparent;
-      transition: all .2s;
+      cursor: pointer
     }
 
-    .nav-tab.active {
-      color: var(--ink);
-      border-bottom-color: var(--ink)
+    .cdialog-ok {
+      flex: 1.4;
+      padding: 14px;
+      border: none;
+      border-radius: 14px;
+      font-size: 15px;
+      font-family: inherit;
+      font-weight: 600;
+      color: #fff;
+      background: var(--danger);
+      cursor: pointer
     }
+
+    .cdialog-ok.safe { background: var(--accent) }
+
+    .cdialog-input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      font-size: 16px;
+      font-family: inherit;
+      background: var(--bg);
+      color: var(--ink);
+      margin-bottom: 14px;
+      outline: none;
+      transition: border-color .2s
+    }
+
+    .cdialog-input:focus { border-color: var(--accent) }
 
     /* ═══ PAGES ═══ */
-    .page {
-      display: none;
-      animation: fadeIn .2s
-    }
+    .page { display: none }
 
     .page.active {
-      display: block
+      display: block;
+      animation: slideUp .22s cubic-bezier(.32,0,.15,1)
     }
 
-    @keyframes fadeIn {
-      from {
-        opacity: 0
-      }
-
-      to {
-        opacity: 1
-      }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(10px) }
+      to   { opacity: 1; transform: translateY(0) }
     }
+
+    /* Number countup shimmer */
+    @keyframes numPop {
+      0%   { transform: scale(1) }
+      40%  { transform: scale(1.06) }
+      100% { transform: scale(1) }
+    }
+
+    .num-pop { animation: numPop .35s ease }
 
     /* HEADER inside page */
     .phead {
@@ -223,12 +352,18 @@
     /* ═══ BALANCE CARD ═══ */
     .balance-card {
       margin: 0 14px 16px;
-      background: var(--ink);
+      background: linear-gradient(135deg, #1A1814 0%, #2a2420 60%, #1B4332 100%);
       border-radius: 22px;
       padding: 24px 26px 22px;
       color: #fff;
       position: relative;
-      overflow: hidden
+      overflow: hidden;
+      animation: cardShimmer 8s ease-in-out infinite alternate
+    }
+
+    @keyframes cardShimmer {
+      from { background: linear-gradient(135deg, #1A1814 0%, #2a2420 60%, #1B4332 100%) }
+      to   { background: linear-gradient(135deg, #1B4332 0%, #2a2420 60%, #1A1814 100%) }
     }
 
     .balance-card::before {
@@ -743,6 +878,185 @@
     .goal-add-btn:hover {
       border-color: var(--ink);
       color: var(--ink)
+    }
+
+    /* ═══ EARNING GOAL ═══ */
+    .earn-goal-card {
+      background: linear-gradient(135deg, #1A1814 0%, #2D6A4F 100%);
+      border-radius: 20px;
+      padding: 20px;
+      margin: 0 14px 14px;
+      color: #fff;
+      position: relative;
+      overflow: hidden
+    }
+
+    .earn-goal-card::before {
+      content: '';
+      position: absolute;
+      top: -30px;
+      right: -30px;
+      width: 120px;
+      height: 120px;
+      background: rgba(255,255,255,.06);
+      border-radius: 50%
+    }
+
+    .earn-goal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px
+    }
+
+    .earn-goal-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 18px;
+      letter-spacing: -.3px
+    }
+
+    .earn-goal-edit {
+      background: rgba(255,255,255,.15);
+      border: none;
+      color: #fff;
+      border-radius: 99px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background .2s
+    }
+
+    .earn-goal-edit:hover { background: rgba(255,255,255,.25) }
+
+    .earn-goal-amounts {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 10px
+    }
+
+    .earn-goal-earned {
+      font-family: 'DM Serif Display', serif;
+      font-size: 30px;
+      letter-spacing: -.5px;
+      line-height: 1
+    }
+
+    .earn-goal-target {
+      font-size: 12px;
+      opacity: .7;
+      text-align: right
+    }
+
+    .earn-goal-bar {
+      height: 8px;
+      background: rgba(255,255,255,.2);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-bottom: 8px
+    }
+
+    .earn-goal-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #52D9A0, #A7F3D0);
+      border-radius: 99px;
+      transition: width .6s
+    }
+
+    .earn-goal-footer {
+      font-size: 11px;
+      opacity: .7
+    }
+
+    .earn-goal-empty {
+      text-align: center;
+      padding: 4px 0 2px
+    }
+
+    .earn-goal-empty p {
+      font-size: 13px;
+      opacity: .75;
+      margin-bottom: 10px
+    }
+
+    /* Wishlist */
+    .wish-section {
+      margin: 0 14px 14px
+    }
+
+    .wish-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px
+    }
+
+    .wish-title {
+      font-weight: 600;
+      font-size: 14px
+    }
+
+    .wish-add-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 99px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity .2s
+    }
+
+    .wish-add-btn:hover { opacity: .85 }
+
+    .wish-item {
+      background: var(--surface);
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      box-shadow: var(--shadow)
+    }
+
+    .wish-ico { font-size: 22px }
+
+    .wish-info { flex: 1 }
+
+    .wish-name {
+      font-weight: 500;
+      font-size: 14px
+    }
+
+    .wish-price {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 1px
+    }
+
+    .wish-del {
+      background: var(--danger-light);
+      border: none;
+      color: var(--danger);
+      border-radius: 99px;
+      padding: 4px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity .2s
+    }
+
+    .wish-del:hover { opacity: .75 }
+
+    .wish-total {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: right;
+      margin-top: -4px;
+      margin-bottom: 6px
     }
 
     /* ═══ ACHIEVEMENTS ═══ */
@@ -2102,13 +2416,39 @@
       </div>
     </div>
 
-    <!-- ═══ NAV ═══ -->
-    <div class="nav" style="font-size:12px">
-      <button class="nav-tab active" onclick="showPage('home',this)">Home</button>
-      <button class="nav-tab" onclick="showPage('breakdown',this)">Buckets</button>
-      <button class="nav-tab" onclick="showPage('goals',this)">Goals</button>
-      <button class="nav-tab" onclick="showPage('history',this)">History</button>
-      <button class="nav-tab" onclick="showPage('insights',this)">Insights</button>
+    <!-- ═══ BOTTOM NAV ═══ -->
+    <nav class="nav" id="bottomNav">
+      <button class="nav-tab active" onclick="showPage('home',this)">
+        <span class="nav-ico">🏠</span><span class="nav-lbl">Home</span>
+      </button>
+      <button class="nav-tab" onclick="showPage('breakdown',this)">
+        <span class="nav-ico">📊</span><span class="nav-lbl">Buckets</span>
+      </button>
+      <button class="nav-tab" onclick="showPage('goals',this)">
+        <span class="nav-ico">🎯</span><span class="nav-lbl">Goals</span>
+      </button>
+      <button class="nav-tab" onclick="showPage('history',this)">
+        <span class="nav-ico">📋</span><span class="nav-lbl">History</span>
+      </button>
+      <button class="nav-tab" onclick="showPage('insights',this)">
+        <span class="nav-ico">💡</span><span class="nav-lbl">Insights</span>
+      </button>
+    </nav>
+    <!-- FAB -->
+    <button class="fab" onclick="openSheet()" title="Add transaction">+</button>
+
+    <!-- Custom confirm / input dialog -->
+    <div class="cdialog-bg" id="cdialogBg">
+      <div class="cdialog">
+        <div class="cdialog-ico" id="cdialogIco"></div>
+        <div class="cdialog-title" id="cdialogTitle"></div>
+        <div class="cdialog-sub" id="cdialogSub"></div>
+        <input class="cdialog-input" id="cdialogInput" style="display:none" type="number" placeholder="₹ amount">
+        <div class="cdialog-btns">
+          <button class="cdialog-cancel" id="cdialogCancel" onclick="closeCDialog()">Cancel</button>
+          <button class="cdialog-ok" id="cdialogOk">Confirm</button>
+        </div>
+      </div>
     </div>
 
     <!-- ═══ HOME ═══ -->
@@ -2133,15 +2473,15 @@
 
       <!-- Balance -->
       <div class="balance-card" style="margin-top:14px">
-        <div class="bl-lbl">Total Balance</div>
+        <div class="bl-lbl" id="balGreet">Total Balance</div>
         <div class="bl-amt"><span class="cur">₹</span><span id="totBal">0</span></div>
         <div class="bl-row">
           <div class="bl-mini">
-            <div class="bl-mini-lbl">Income (month)</div>
+            <div class="bl-mini-lbl" id="incLbl">Income · This month</div>
             <div class="bl-mini-val inc">₹<span id="totInc">0</span></div>
           </div>
           <div class="bl-mini">
-            <div class="bl-mini-lbl">Spent (month)</div>
+            <div class="bl-mini-lbl" id="expLbl">Spent · This month</div>
             <div class="bl-mini-val exp">₹<span id="totExp">0</span></div>
           </div>
         </div>
@@ -2167,7 +2507,7 @@
       </div>
 
       <!-- Quick Add chips -->
-      <div class="sh"><span>Quick Add</span><span class="sh-link" onclick="openSheet()">+ Add new</span></div>
+      <div class="sh"><span>Quick Add</span><span class="sh-link" style="font-size:11px;color:var(--muted)">Tap + to log</span></div>
       <div class="qa-row" id="qaRow"></div>
 
       <!-- Donut -->
@@ -2201,11 +2541,26 @@
     <!-- ═══ GOALS ═══ -->
     <div class="page" id="page-goals">
       <div class="phead">
-        <h1>Savings <span>goals</span></h1>
-        <div class="sub">Small wins build big habits</div>
+        <h1>Goals &amp; <span>dreams</span></h1>
+        <div class="sub">Earn with purpose, spend with intention</div>
       </div>
+
+      <!-- Earning Goal Card -->
+      <div id="earningGoalCard"></div>
+
+      <!-- Wish List -->
+      <div class="wish-section">
+        <div class="wish-header">
+          <div class="wish-title">🛍 What I want to buy</div>
+          <button class="wish-add-btn" onclick="openWishlistSheet()">+ Add item</button>
+        </div>
+        <div id="wishlistItems"></div>
+      </div>
+
+      <!-- Savings Goals -->
+      <div class="sh" style="margin:0 14px 10px"><span>Savings goals</span></div>
       <div id="goalList"></div>
-      <button class="goal-add-btn" onclick="openGoalSheet()">+ New goal</button>
+      <button class="goal-add-btn" onclick="openGoalSheet()">+ New savings goal</button>
 
       <!-- Achievements -->
       <div class="sh" style="margin-top:10px"><span>Achievements</span><span id="achvCount"></span></div>
@@ -2566,6 +2921,42 @@
   </div>
 
   <!-- ═══ GOAL SHEET ═══ -->
+  <!-- Earning Goal Sheet -->
+  <div class="overlay" id="earningGoalOverlay" onclick="if(event.target===this)closeEarningGoalSheet()">
+    <div class="sheet">
+      <div class="handle"></div>
+      <div style="font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:6px">Earning goal</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:18px">How much do you want to earn this month?</div>
+      <div style="margin-bottom:18px">
+        <label style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:500;display:block;margin-bottom:6px">Monthly earning target (₹)</label>
+        <input type="number" class="desc-input" id="earningGoalInput" placeholder="e.g. 50000" style="margin-bottom:0">
+      </div>
+      <button class="submit-btn" onclick="saveEarningGoal()">Set goal</button>
+    </div>
+  </div>
+
+  <!-- Wishlist Item Sheet -->
+  <div class="overlay" id="wishlistOverlay" onclick="if(event.target===this)closeWishlistSheet()">
+    <div class="sheet">
+      <div class="handle"></div>
+      <div style="font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:6px">Add to wish list</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:18px">What do you want to buy?</div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:500;display:block;margin-bottom:6px">Item name</label>
+        <input type="text" class="desc-input" id="wishItemName" placeholder="e.g. iPhone 15, Nike shoes" style="margin-bottom:0">
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:500;display:block;margin-bottom:6px">Price (₹)</label>
+        <input type="number" class="desc-input" id="wishItemPrice" placeholder="e.g. 12000" style="margin-bottom:0">
+      </div>
+      <div style="margin-bottom:18px">
+        <label style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:500;display:block;margin-bottom:6px">Pick an emoji</label>
+        <div class="cat-chips" id="wishEmojis" style="max-height:none"></div>
+      </div>
+      <button class="submit-btn" onclick="addWishlistItem()">Add to list</button>
+    </div>
+  </div>
+
   <div class="overlay" id="goalOverlay" onclick="if(event.target===this)closeGoalSheet()">
     <div class="sheet">
       <div class="handle"></div>
@@ -2654,6 +3045,8 @@
       unlockedAchv: [],
       createdAt: Date.now(),
       lastBackup: null,      // timestamp of last export
+      earningGoal: { target: 0, month: '' },
+      wishlist: [],
     };
     let state = Object.assign({}, defaultState, JSON.parse(localStorage.getItem(LS_KEY) || '{}'));
     state.budgets = Object.assign({ e: 0, n: 0, g: 0 }, state.budgets || {});
@@ -2675,8 +3068,71 @@
     const txMonth = t => { const d = new Date(t.ts || t.id); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
 
     // ════════════════════════════════════════
-    // NAV
+    // UTILS — countUp, vibrate, dialogs
     // ════════════════════════════════════════
+    function countUp(el, target, duration = 600) {
+      if (!el) return;
+      const start = parseFloat(el.textContent.replace(/,/g, '')) || 0;
+      if (start === target) return;
+      const startTime = performance.now();
+      const step = (now) => {
+        const p = Math.min((now - startTime) / duration, 1);
+        const ease = p < .5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
+        el.textContent = fmt(Math.round(start + (target - start) * ease));
+        if (p < 1) requestAnimationFrame(step);
+        else { el.textContent = fmt(target); el.classList.add('num-pop'); setTimeout(() => el.classList.remove('num-pop'), 400); }
+      };
+      requestAnimationFrame(step);
+    }
+
+    function vibrate(pattern = 8) {
+      if (navigator.vibrate) navigator.vibrate(pattern);
+    }
+
+    // Custom confirm dialog
+    let _cdResolve = null;
+    function showConfirm({ ico = '⚠️', title, sub = '', okLabel = 'Delete', okSafe = false } = {}, onOk) {
+      $('cdialogIco').textContent = ico;
+      $('cdialogTitle').textContent = title;
+      $('cdialogSub').textContent = sub;
+      $('cdialogInput').style.display = 'none';
+      const okBtn = $('cdialogOk');
+      okBtn.textContent = okLabel;
+      okBtn.className = 'cdialog-ok' + (okSafe ? ' safe' : '');
+      okBtn.onclick = () => { closeCDialog(); onOk && onOk(); };
+      $('cdialogBg').classList.add('open');
+    }
+
+    // Custom amount prompt
+    function showAmountPrompt({ ico = '💰', title, sub = '', placeholder = 'Enter amount (₹)' } = {}, onOk) {
+      $('cdialogIco').textContent = ico;
+      $('cdialogTitle').textContent = title;
+      $('cdialogSub').textContent = sub;
+      const inp = $('cdialogInput');
+      inp.style.display = 'block';
+      inp.placeholder = placeholder;
+      inp.value = '';
+      inp.type = 'number';
+      $('cdialogOk').textContent = 'Add';
+      $('cdialogOk').className = 'cdialog-ok safe';
+      $('cdialogOk').onclick = () => {
+        const v = parseFloat(inp.value);
+        if (!isNaN(v) && v > 0) { closeCDialog(); onOk(v); }
+      };
+      $('cdialogBg').classList.add('open');
+      setTimeout(() => inp.focus(), 320);
+    }
+
+    function closeCDialog() {
+      $('cdialogBg').classList.remove('open');
+      $('cdialogInput').value = '';
+    }
+
+    // ════════════════════════════════════════
+    // NAV + SWIPE
+    // ════════════════════════════════════════
+    const PAGE_ORDER = ['home', 'breakdown', 'goals', 'history', 'insights'];
+
     function showPage(id, el) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       $('page-' + id).classList.add('active');
@@ -2685,7 +3141,30 @@
       curPage = id;
       render();
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      vibrate(6);
     }
+
+    // Swipe between pages
+    (function setupSwipe() {
+      let startX = 0, startY = 0;
+      document.addEventListener('touchstart', e => {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+      }, { passive: true });
+      document.addEventListener('touchend', e => {
+        const dx = e.changedTouches[0].clientX - startX;
+        const dy = e.changedTouches[0].clientY - startY;
+        if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.7) return;
+        const idx = PAGE_ORDER.indexOf(curPage);
+        if (dx < 0 && idx < PAGE_ORDER.length - 1) {
+          const tabs = document.querySelectorAll('.nav-tab');
+          showPage(PAGE_ORDER[idx + 1], tabs[idx + 1]);
+        } else if (dx > 0 && idx > 0) {
+          const tabs = document.querySelectorAll('.nav-tab');
+          showPage(PAGE_ORDER[idx - 1], tabs[idx - 1]);
+        }
+      }, { passive: true });
+    })();
 
     // ════════════════════════════════════════
     // RENDER
@@ -2720,12 +3199,14 @@
 
       if (curPage === 'home') {
         const periodLabel = homeFilter === 'month' ? 'This month' : 'Last ' + homeFilter + ' days';
-        $('totBal').textContent = fmt(totalInc - totalExp);
-        $('totInc').textContent = fmt(monthInc);
-        $('totExp').textContent = fmt(monthExp);
-        // Update mini labels to reflect selected period
-        document.querySelectorAll('.bl-mini-lbl')[0].textContent = 'Income · ' + periodLabel;
-        document.querySelectorAll('.bl-mini-lbl')[1].textContent = 'Spent · ' + periodLabel;
+        const hr = new Date().getHours();
+        const greet = hr < 12 ? 'Good morning ☀️' : hr < 17 ? 'Good afternoon 🌤' : 'Good evening 🌙';
+        $('balGreet').textContent = greet;
+        countUp($('totBal'), totalInc - totalExp);
+        countUp($('totInc'), monthInc);
+        countUp($('totExp'), monthExp);
+        $('incLbl').textContent = 'Income · ' + periodLabel;
+        $('expLbl').textContent = 'Spent · ' + periodLabel;
         const curMonthExp = monthTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
         renderSafeToSpend(curMonthExp, bTotsCurMonth);
         renderQuickAdd();
@@ -2734,7 +3215,7 @@
         renderBackupBanner();
       }
       if (curPage === 'breakdown') renderBuckets(bTots, monthExp);
-      if (curPage === 'goals') { renderGoals(); renderAchievements('achvGrid'); }
+      if (curPage === 'goals') { renderEarningGoal(); renderGoals(); renderAchievements('achvGrid'); }
       if (curPage === 'history') renderHistory();
       if (curPage === 'insights') renderInsights();
 
@@ -2904,13 +3385,110 @@
       render();
     }
     function promptCustomGoalAdd(id) {
-      const v = prompt('Add how much (₹)?');
-      const n = parseFloat(v);
-      if (!isNaN(n) && n > 0) addToGoal(id, n);
+      const g = state.goals.find(g => g.id === id);
+      showAmountPrompt({ ico: g ? g.emoji : '💰', title: 'Add to goal', sub: g ? `How much toward "${g.name}"?` : '' }, amt => addToGoal(id, amt));
     }
     function deleteGoal(id) {
-      if (!confirm('Delete this goal?')) return;
-      state.goals = state.goals.filter(g => g.id !== id);
+      const g = state.goals.find(g => g.id === id);
+      showConfirm({ ico: '🗑', title: 'Delete goal?', sub: g ? `"${g.name}" will be removed.` : '', okLabel: 'Delete' }, () => {
+        state.goals = state.goals.filter(g => g.id !== id);
+        render();
+      });
+    }
+
+    // ── EARNING GOAL ──
+    const WISH_EMOJIS = ['📱','👟','👗','💻','📸','🎮','🎧','✈️','🏠','🚗','⌚','💍','🎒','📚','🛋','🏋️','🎸','🎨'];
+    let wishEmoji = '🛍';
+
+    function renderEarningGoal() {
+      const card = $('earningGoalCard');
+      const thisMonth = currentMonth();
+      const monthInc = state.txs.filter(t => t.type === 'income' && txMonth(t) === thisMonth).reduce((s, t) => s + t.amount, 0);
+      const goal = state.earningGoal;
+      const isSet = goal.target > 0;
+      const pct = isSet ? Math.min(Math.round((monthInc / goal.target) * 100), 100) : 0;
+      const remaining = isSet ? Math.max(goal.target - monthInc, 0) : 0;
+
+      card.innerHTML = `<div class="earn-goal-card">
+        <div class="earn-goal-head">
+          <div class="earn-goal-title">💸 Earning goal</div>
+          <button class="earn-goal-edit" onclick="openEarningGoalSheet()">${isSet ? '✏️ Edit' : '+ Set goal'}</button>
+        </div>
+        ${isSet ? `
+          <div class="earn-goal-amounts">
+            <div>
+              <div style="font-size:11px;opacity:.6;margin-bottom:4px">Earned this month</div>
+              <div class="earn-goal-earned">₹${fmt(monthInc)}</div>
+            </div>
+            <div class="earn-goal-target">
+              <div style="margin-bottom:4px">Target</div>
+              <div style="font-size:18px;font-family:'DM Serif Display',serif">₹${fmt(goal.target)}</div>
+            </div>
+          </div>
+          <div class="earn-goal-bar"><div class="earn-goal-bar-fill" style="width:${pct}%"></div></div>
+          <div class="earn-goal-footer">${pct >= 100 ? '🎉 Goal smashed! Great work!' : `₹${fmt(remaining)} more to hit your goal · ${pct}% done`}</div>
+        ` : `
+          <div class="earn-goal-empty">
+            <p>Set your income target for this month and track your progress.</p>
+          </div>
+        `}
+      </div>`;
+
+      // Wishlist
+      const wl = state.wishlist;
+      const wishContainer = $('wishlistItems');
+      if (!wl.length) {
+        wishContainer.innerHTML = `<div style="text-align:center;padding:14px;color:var(--muted);font-size:13px">Nothing on your wish list yet.<br>Add what you're working toward! ✨</div>`;
+      } else {
+        const total = wl.reduce((s, w) => s + (w.price || 0), 0);
+        wishContainer.innerHTML = wl.map(w => `<div class="wish-item">
+          <div class="wish-ico">${w.emoji}</div>
+          <div class="wish-info">
+            <div class="wish-name">${w.name}</div>
+            ${w.price ? `<div class="wish-price">₹${fmt(w.price)}</div>` : ''}
+          </div>
+          <button class="wish-del" onclick="deleteWishItem(${w.id})">✕</button>
+        </div>`).join('') + `<div class="wish-total">Total wishlist: ₹${fmt(total)}</div>`;
+      }
+    }
+
+    function openEarningGoalSheet() {
+      $('earningGoalOverlay').classList.add('open');
+      $('earningGoalInput').value = state.earningGoal.target > 0 ? state.earningGoal.target : '';
+    }
+    function closeEarningGoalSheet() { $('earningGoalOverlay').classList.remove('open'); }
+    function saveEarningGoal() {
+      const val = parseFloat($('earningGoalInput').value);
+      if (!val || val <= 0) return;
+      state.earningGoal = { target: val, month: currentMonth() };
+      closeEarningGoalSheet();
+      pushToast('💸 Earning goal set!', 'gold');
+      render();
+    }
+
+    function openWishlistSheet() {
+      $('wishlistOverlay').classList.add('open');
+      $('wishItemName').value = '';
+      $('wishItemPrice').value = '';
+      wishEmoji = '🛍';
+      $('wishEmojis').innerHTML = WISH_EMOJIS.map(e => `<button class="cat-chip${wishEmoji === e ? ' active' : ''}" onclick="pickWishEmoji('${e}')">${e}</button>`).join('');
+    }
+    function closeWishlistSheet() { $('wishlistOverlay').classList.remove('open'); }
+    function pickWishEmoji(e) {
+      wishEmoji = e;
+      $('wishEmojis').innerHTML = WISH_EMOJIS.map(em => `<button class="cat-chip${wishEmoji === em ? ' active' : ''}" onclick="pickWishEmoji('${em}')">${em}</button>`).join('');
+    }
+    function addWishlistItem() {
+      const name = $('wishItemName').value.trim();
+      const price = parseFloat($('wishItemPrice').value) || 0;
+      if (!name) return;
+      state.wishlist.push({ id: Date.now(), name, price, emoji: wishEmoji });
+      closeWishlistSheet();
+      pushToast(`🛍 "${name}" added to wish list!`);
+      render();
+    }
+    function deleteWishItem(id) {
+      state.wishlist = state.wishlist.filter(w => w.id !== id);
       render();
     }
 
@@ -3156,15 +3734,15 @@
 
     function confirmDeleteTx() {
       closeTxActions();
-      // Small delay so sheet closes before confirm shows
       setTimeout(() => {
         const t = state.txs.find(t => t.id === activeTxId);
         if (!t) return;
-        if (confirm(`Delete "${t.desc || t.cat || 'this entry'}"?\n₹${fmt(t.amount)} on ${t.date}`)) {
-          delTx(activeTxId);
-          pushToast('Entry deleted');
-        }
-      }, 300);
+        showConfirm({
+          ico: '🗑',
+          title: `Delete entry?`,
+          sub: `"${t.desc || t.cat || 'this entry'}" · ₹${fmt(t.amount)} on ${t.date}`
+        }, () => { delTx(activeTxId); pushToast('Entry deleted'); });
+      }, 320);
     }
 
     // ── EDIT SHEET ──────────────────────────
@@ -3452,7 +4030,8 @@
         else if (e.key === 'Backspace' && e.target.tagName !== 'INPUT') keyPress('back');
       }
       if (e.key === 'Escape') {
-        ['streakOverlay', 'achvOverlay', 'budgetOverlay', 'goalOverlay', 'settingsOverlay', 'txActionOverlay', 'editOverlay'].forEach(id => $(id).classList.remove('open'));
+        ['streakOverlay', 'achvOverlay', 'budgetOverlay', 'goalOverlay', 'earningGoalOverlay', 'wishlistOverlay', 'settingsOverlay', 'txActionOverlay', 'editOverlay'].forEach(id => $(id).classList.remove('open'));
+        closeCDialog();
       }
     });
 
@@ -3607,23 +4186,27 @@
           const currentCount = state.txs.length;
           const incomingCount = imported.txs.length;
 
-          const msg = currentCount > 0
-            ? `Restore ${incomingCount} transactions from backup?\n\nThis will REPLACE your current data (${currentCount} entries).`
-            : `Restore ${incomingCount} transactions from backup?`;
+          const sub = currentCount > 0
+            ? `This will replace your current ${currentCount} entries.`
+            : `${incomingCount} transactions will be restored.`;
 
-          if (!confirm(msg)) {
-            event.target.value = ''; // reset input
-            return;
-          }
-
-          // Merge with defaults to handle old backup formats safely
-          state = Object.assign({}, defaultState, imported);
-          state.budgets = Object.assign({ e: 0, n: 0, g: 0 }, state.budgets || {});
-          save();
-          pushToast(`✓ Restored ${incomingCount} entries!`, 'gold');
-          confetti();
-          closeSettingsSheet();
-          render();
+          showConfirm({
+            ico: '📦',
+            title: `Restore ${incomingCount} transactions?`,
+            sub,
+            okLabel: 'Restore',
+            okSafe: true
+          }, () => {
+            // Merge with defaults to handle old backup formats safely
+            state = Object.assign({}, defaultState, imported);
+            state.budgets = Object.assign({ e: 0, n: 0, g: 0 }, state.budgets || {});
+            save();
+            pushToast(`✓ Restored ${incomingCount} entries!`, 'gold');
+            confetti();
+            closeSettingsSheet();
+            render();
+          });
+          event.target.value = '';
         } catch (err) {
           alert('Could not read backup file. Make sure it\'s a Paisa .json backup.');
         }
@@ -3634,13 +4217,19 @@
 
     // RESET ALL
     function resetAllData() {
-      if (!confirm('⚠️ Erase ALL data?\n\nThis deletes every transaction, goal, streak, and achievement. This cannot be undone.\n\nDid you export a backup first?')) return;
-      if (!confirm('Really sure? Last chance.')) return;
-      state = JSON.parse(JSON.stringify(defaultState));
-      save();
-      closeSettingsSheet();
-      pushToast('All data erased');
-      render();
+      showConfirm({
+        ico: '⚠️',
+        title: 'Erase all data?',
+        sub: 'This deletes every transaction, goal, streak and achievement. Export a backup first!'
+      }, () => {
+        showConfirm({ ico: '💀', title: 'Really sure?', sub: 'This is your last chance. Cannot be undone.', okLabel: 'Yes, erase' }, () => {
+          state = JSON.parse(JSON.stringify(defaultState));
+          save();
+          closeSettingsSheet();
+          pushToast('All data erased');
+          render();
+        });
+      });
     }
 
     // ════════════════════════════════════════
